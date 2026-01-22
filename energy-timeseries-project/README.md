@@ -50,7 +50,7 @@ energy-timeseries-project/
 
 ```bash
 # Repository klonen
-cd c:\Users\Christian\Coding\TSA_Boroz
+cd c:\Users\Christian\Coding\AdvancedTimeSeriesPrediction
 cd energy-timeseries-project
 
 # Virtual Environment erstellen (empfohlen)

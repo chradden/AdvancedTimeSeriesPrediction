@@ -422,7 +422,7 @@ mlflow  # für Experiment-Tracking (optional)
 
 ### Schritt 2: Projektstruktur erstellen
 ```bash
-cd c:\Users\Christian\Coding\TSA_Boroz
+cd c:\Users\Christian\Coding\AdvancedTimeSeriesPrediction
 mkdir energy-timeseries-project
 cd energy-timeseries-project
 # Erstelle Ordnerstruktur (siehe oben)
