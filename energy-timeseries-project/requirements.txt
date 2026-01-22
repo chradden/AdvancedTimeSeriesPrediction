@@ -27,6 +27,12 @@ darts>=0.27.0
 pytorch-forecasting>=1.0.0
 neuralforecast>=1.6.0
 
+# Foundation Models / LLMs for Time Series
+git+https://github.com/amazon-science/chronos-forecasting.git
+transformers>=4.35.0
+accelerate>=0.20.0
+einops>=0.7.0
+
 # Hyperparameter Optimization
 optuna>=3.3.0
 

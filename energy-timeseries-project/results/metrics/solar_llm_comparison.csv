@@ -1,0 +1,6 @@
+Model,MAE_MW,R2,MAPE_%,Training,Type
+XGBoost (Tuned),249.03,0.9825,3.15,7.6 min,Gradient Boosting
+LSTM,251.53,0.9822,3.48,3.4 min,Deep Learning
+GRU,252.32,0.982,3.49,4.7 min,Deep Learning
+XGBoost (Baseline),269.47,0.9817,3.41,0.6 s,Gradient Boosting
+Chronos-T5-Small,4417.926543273926,-2.9714649595234,49.93792973908841,Zero-Shot,Foundation Model

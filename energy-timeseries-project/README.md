@@ -48,6 +48,10 @@ energy-timeseries-project/
 │   ├── 06_deep_learning_models.ipynb   # ✅ LSTM, GRU, Bi-LSTM
 │   ├── 07_generative_models.ipynb      # ✅ VAE, GAN, DeepAR
 │   ├── 08_advanced_models.ipynb        # ✅ TFT, N-BEATS
+│   ├── 09_model_comparison.ipynb       # ✅ Vergleich aller Modelle
+│   ├── 10_multi_series_analysis.ipynb  # ✅ 5 Zeitreihen parallel
+│   ├── 11_xgboost_tuning.ipynb         # ✅ XGBoost Hyperparameter-Optimierung
+│   ├── 12_llm_time_series_models.ipynb # ✅ Foundation Models (Chronos)
 │   ├── 09_model_comparison.ipynb       # ✅ Finaler Modellvergleich
 │   ├── 10_multi_series_analysis.ipynb  # ✅ Multi-Series Pipeline (alle 5 Datensätze)
 │   └── 11_xgboost_tuning.ipynb         # ✅ Hyperparameter-Optimierung
@@ -150,6 +154,14 @@ Das Notebook wird:
 - Temporal Fusion Transformer (TFT)
 - N-BEATS
 - N-HiTS
+
+### ✅ Foundation Models (LLMs)
+- **Chronos** (Amazon): T5-based zero-shot forecasting
+- **TimeGPT** (Nixtla): GPT-ähnliche Architektur
+- **Lag-Llama** (ServiceNow): Llama-basiert
+- **Moirai** (Salesforce): Multi-Scale Transformer
+
+**Ergebnis**: Foundation Models zeigen beeindruckende Zero-Shot-Fähigkeiten, aber bei domänenspezifischen Problemen mit reichlich Trainingsdaten sind XGBoost/LSTM noch überlegen (XGBoost: MAE=249MW vs. Chronos: MAE=4418MW). Hauptvorteil: Rapid Prototyping ohne Training.
 
 ## 📊 Evaluation-Metriken
 
