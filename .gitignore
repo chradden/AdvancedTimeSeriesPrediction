@@ -16,43 +16,62 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
 # Virtual Environment
-.venv/
 venv/
-ENV/
 env/
+ENV/
+.venv/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Data
-data/raw/*.csv
-data/raw/*.json
-data/processed/*.pkl
-data/processed/*.h5
-*.h5
-*.hdf5
-
-# Models
-models/*.pt
-models/*.pth
-models/*.h5
-models/*.pkl
-*.ckpt
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# Data (large files)
+data/raw/*.csv
+data/raw/*.json
+data/processed/*.csv
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# Model artifacts (trained models, not source code)
+energy-timeseries-project/models/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.pb
+
+# Allow source code in src/models/
+!src/models/
+!energy-timeseries-project/src/models/
+
+# Results
+results/figures/*.png
+results/figures/*.jpg
+results/figures/*.pdf
+results/metrics/*.json
+
+# Keep directory structure
+!results/figures/.gitkeep
+!results/metrics/.gitkeep
 
 # OS
 .DS_Store
@@ -65,12 +84,17 @@ Thumbs.db
 *.log
 logs/
 
+# MLflow
+mlruns/
+mlartifacts/
+
+# Environment
+.env
+.env.local
+
 # Cache
 .cache/
 *.cache
-
-# MLflow
-mlruns/
 
 # Pytest
 .pytest_cache/
