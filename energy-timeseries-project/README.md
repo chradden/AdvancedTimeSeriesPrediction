@@ -1,16 +1,29 @@
 # Energie-Zeitreihen-Analyse & -Vorhersage ⚡🔋
 
-**Projektarbeit: Advanced Time Series Prediction**
+**Advanced Time Series Prediction Project**
 
-> Anwendung verschiedener Zeitreihen-Vorhersagemethoden auf deutsche Energiedaten zur Identifikation der optimalen Methode
+> Comprehensive comparison of time series forecasting methods applied to German energy data
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/Status-Production--Ready-success.svg)]()
+[![FastAPI](https://img.shields.io/badge/FastAPI-Production-success.svg)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Avg R²](https://img.shields.io/badge/Avg%20R²-0.978-brightgreen.svg)]()
 
-## 🎯 Projektziel & Ergebnisse
+## 🚀 Quick Start
 
-Entwicklung produktionsreifer Vorhersagemodelle für den deutschen Energiemarkt:
+### Launch the Web Dashboard
+
+```bash
+docker-compose up
+```
+
+**Open**: http://localhost:8000/ui
+
+### API Documentation
+
+**Swagger UI**: http://localhost:8000/docs
+
+## 🎯 Project Results
 
 | Dataset | Best Model | R² Score | MAE | MAPE | Status |
 |---------|------------|----------|-----|------|--------|

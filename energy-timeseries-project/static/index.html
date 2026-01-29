@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Energy Forecasting Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric label {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .metric .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+            border-left: 4px solid #c62828;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .grid-full {
+            grid-column: 1 / -1;
+        }
+
+        .predictions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+        .predictions-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .predictions-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .predictions-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 0.9em;
+            margin-top: 30px;
+        }
+
+        .energy-icon {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                flex-direction: column;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .predictions-table {
+                font-size: 0.85em;
+            }
+
+            .predictions-table th, .predictions-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Energy Forecasting Dashboard</h1>
+            <p>Echtzeit-Vorhersage für deutsche Energieerzeugung</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot"></span>
+                    <span>API Status: <strong>Online</strong></span>
+                </div>
+                <div class="status-item">
+                    <span class="energy-icon">🔋</span>
+                    <span id="last-update">Letztes Update: -</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Control Panel -->
+            <div class="card">
+                <h2>🎛️ Steuerung</h2>
+                
+                <div class="control-group">
+                    <label for="forecast-type">Vorhersage-Typ:</label>
+                    <select id="forecast-type">
+                        <option value="solar">☀️ Solarenergie</option>
+                        <option value="wind_offshore">🌊 Wind Offshore</option>
+                        <option value="wind_onshore">💨 Wind Onshore</option>
+                        <option value="consumption">🏭 Stromverbrauch</option>
+                        <option value="price">💰 Strompreis</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="forecast-hours">Vorhersage-Horizont (Stunden):</label>
+                    <input type="number" id="forecast-hours" min="1" max="168" value="24">
+                </div>
+
+                <button onclick="generateForecast()" id="forecast-btn">
+                    📊 Vorhersage generieren
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Berechne Vorhersage...</p>
+                </div>
+
+                <div class="error-message" id="error-message"></div>
+                <div class="success-message" id="success-message"></div>
+            </div>
+
+            <!-- Metrics Panel -->
+            <div class="card">
+                <h2>📈 Modell-Performance</h2>
+                <div class="metrics">
+                    <div class="metric">
+                        <label>R² Score</label>
+                        <div class="value" id="r2-score">-</div>
+                    </div>
+                    <div class="metric">
+                        <label>MAE</label>
+                        <div class="value" id="mae-score">-</div>
+                    </div>
+                    <div class="metric">
+                        <label>MAPE</label>
+                        <div class="value" id="mape-score">-</div>
+                    </div>
+                    <div class="metric">
+                        <label>Modell</label>
+                        <div class="value" id="model-name" style="font-size: 1.2em;">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="card grid-full">
+                <h2>📊 Vorhersage-Visualisierung</h2>
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Predictions Table -->
+            <div class="card grid-full">
+                <h2>📋 Detaillierte Vorhersagen</h2>
+                <div style="overflow-x: auto;">
+                    <table class="predictions-table" id="predictions-table">
+                        <thead>
+                            <tr>
+                                <th>Zeitpunkt</th>
+                                <th>Vorhersage</th>
+                                <th>Einheit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictions-body">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #999;">
+                                    Führe eine Vorhersage durch, um Ergebnisse zu sehen
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Energy Forecasting System • Built with FastAPI, XGBoost & Chart.js</p>
+            <p>Datenquelle: SMARD (Bundesnetzagentur) • Zeitraum: 2022-2024</p>
+        </div>
+    </div>
+
+    <script>
+        let currentChart = null;
+
+        const CONFIG = {
+            solar: { label: 'Solarenergie (MW)', unit: 'MW', color: '#FDB913' },
+            wind_offshore: { label: 'Wind Offshore (MW)', unit: 'MW', color: '#003399' },
+            wind_onshore: { label: 'Wind Onshore (MW)', unit: 'MW', color: '#66CCFF' },
+            consumption: { label: 'Stromverbrauch (MW)', unit: 'MW', color: '#FF6B6B' },
+            price: { label: 'Strompreis (€/MWh)', unit: '€/MWh', color: '#2ECC71' }
+        };
+
+        async function generateForecast() {
+            const forecastType = document.getElementById('forecast-type').value;
+            const forecastHours = parseInt(document.getElementById('forecast-hours').value);
+            const btn = document.getElementById('forecast-btn');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+
+            // Reset messages
+            errorMsg.classList.remove('active');
+            successMsg.classList.remove('active');
+
+            // Validation
+            if (forecastHours < 1 || forecastHours > 168) {
+                showError('Vorhersage-Horizont muss zwischen 1 und 168 Stunden liegen');
+                return;
+            }
+
+            btn.disabled = true;
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`/api/predict/${forecastType}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ hours: forecastHours })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update UI with results
+                updateChart(data, forecastType);
+                updateMetrics(data);
+                updateTable(data);
+                updateTimestamp();
+
+                showSuccess(`✅ Vorhersage erfolgreich generiert für ${forecastHours} Stunden`);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`❌ Fehler: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        function updateChart(data, forecastType) {
+            const config = CONFIG[forecastType];
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const predictions = data.predictions.map(p => parseFloat(p.toFixed(2)));
+            const labels = data.timestamps.map(ts => {
+                const date = new Date(ts);
+                return date.toLocaleString('de-DE', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            });
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: config.label,
+                        data: predictions,
+                        borderColor: config.color,
+                        backgroundColor: config.color + '20',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointBackgroundColor: config.color,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12 },
+                                padding: 15,
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: config.unit
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMetrics(data) {
+            document.getElementById('r2-score').textContent = 
+                (data.r2_expected || 0.978).toFixed(3);
+            document.getElementById('mae-score').textContent = 
+                (data.mae_expected || '-').toString().substring(0, 10);
+            document.getElementById('mape-score').textContent = 
+                data.mape_expected ? (data.mape_expected * 100).toFixed(1) + '%' : '-';
+            document.getElementById('model-name').textContent = 
+                data.model || 'XGBoost';
+        }
+
+        function updateTable(data) {
+            const tbody = document.getElementById('predictions-body');
+            const forecastType = document.getElementById('forecast-type').value;
+            const config = CONFIG[forecastType];
+
+            tbody.innerHTML = data.timestamps.map((ts, idx) => {
+                const date = new Date(ts);
+                const timeStr = date.toLocaleString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const value = parseFloat(data.predictions[idx].toFixed(2));
+
+                return `
+                    <tr>
+                        <td><strong>${timeStr}</strong></td>
+                        <td>${value.toLocaleString('de-DE')}</td>
+                        <td>${config.unit}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('last-update').textContent = 
+                `Letztes Update: ${timeStr}`;
+        }
+
+        function showError(message) {
+            const el = document.getElementById('error-message');
+            el.textContent = message;
+            el.classList.add('active');
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('success-message');
+            el.textContent = message;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 5000);
+        }
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTimestamp();
+            // Auto-generate first forecast
+            setTimeout(generateForecast, 500);
+        });
+    </script>
+</body>
+</html>
