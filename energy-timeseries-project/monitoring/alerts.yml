@@ -1,0 +1,79 @@
+groups:
+  - name: energy_forecasting_alerts
+    interval: 1m
+    rules:
+      # Model Drift Alerts
+      - alert: HighModelDrift
+        expr: energy_model_drift_score > 0.5
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High model drift detected for {{ $labels.energy_type }}"
+          description: "Model drift score is {{ $value }}, indicating significant performance degradation."
+      
+      - alert: ModerateModelDrift
+        expr: energy_model_drift_score > 0.3 and energy_model_drift_score <= 0.5
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Moderate model drift detected for {{ $labels.energy_type }}"
+          description: "Model drift score is {{ $value }}. Consider retraining the model."
+      
+      # Data Quality Alerts
+      - alert: LowDataQuality
+        expr: energy_data_quality_score < 0.5
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low data quality for {{ $labels.energy_type }}"
+          description: "Data quality score is {{ $value }}. Check data source."
+      
+      - alert: ModerateDataQualityIssue
+        expr: energy_data_quality_score < 0.8 and energy_data_quality_score >= 0.5
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Moderate data quality issues for {{ $labels.energy_type }}"
+          description: "Data quality score is {{ $value }}. Monitor data source."
+      
+      # Prediction Error Alerts
+      - alert: HighPredictionError
+        expr: energy_prediction_mae{window="50_predictions"} > 1000
+        for: 20m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High prediction error for {{ $labels.energy_type }}"
+          description: "MAE is {{ $value }}, which is unusually high."
+      
+      - alert: HighMAPE
+        expr: energy_prediction_mape{window="50_predictions"} > 15
+        for: 20m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High MAPE for {{ $labels.energy_type }}"
+          description: "MAPE is {{ $value }}%, indicating poor prediction accuracy."
+      
+      # API Health Alerts
+      - alert: HighAPIErrorRate
+        expr: rate(energy_api_requests_total{status="error"}[5m]) / rate(energy_api_requests_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "Error rate is {{ $value | humanizePercentage }}."
+      
+      - alert: SlowPredictionLatency
+        expr: histogram_quantile(0.95, rate(energy_prediction_latency_seconds_bucket[5m])) > 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow prediction latency for {{ $labels.energy_type }}"
+          description: "95th percentile latency is {{ $value }}s."

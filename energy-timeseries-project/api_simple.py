@@ -10,7 +10,7 @@ Endpoints:
 - GET /models - Available models
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -21,6 +21,59 @@ import xgboost as xgb
 from datetime import datetime, timedelta
 import uvicorn
 import os
+import sys
+import time
+
+# Add src to path
+sys.path.insert(0, '/app/src')
+
+# Simple metrics without external dependencies
+request_count = 0
+prediction_count = 0
+total_latency = 0
+
+def get_simple_metrics():
+    """Generate simple metrics output"""
+    return f"""# HELP energy_predictions_total Total predictions made
+# TYPE energy_predictions_total counter
+energy_predictions_total {prediction_count}
+
+# HELP energy_requests_total Total API requests
+# TYPE energy_requests_total counter
+energy_requests_total {request_count}
+
+# HELP energy_api_latency_sum Total latency in seconds
+# TYPE energy_api_latency_sum gauge
+energy_api_latency_sum {total_latency}
+"""
+
+# Try to import full monitoring (optional)
+try:
+    from monitoring.metrics import (
+        get_monitor, export_metrics, PredictionRecord,
+        prediction_latency, api_requests_total
+    )
+    MONITORING_ENABLED = True
+except ImportError:
+    MONITORING_ENABLED = False
+    export_metrics = None
+    print("⚠️  Full Monitoring not available (using simple metrics)")
+
+# Import real-time data (optional)
+try:
+    from data.smard_realtime import SMARDRealtimeClient
+    REALTIME_ENABLED = True
+except ImportError:
+    REALTIME_ENABLED = False
+    print("⚠️  Real-time SMARD client not available")
+
+# Import weather API (optional)
+try:
+    from data.weather_api import WeatherAPIClient
+    WEATHER_ENABLED = True
+except ImportError:
+    WEATHER_ENABLED = False
+    print("⚠️  Weather API not available")
 
 # Initialize FastAPI
 app = FastAPI(
@@ -181,10 +234,78 @@ async def dashboard():
 
 @app.get("/health")
 async def health_check():
-    return {
+    health_status = {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "model_loaded": model is not None
+        "model_loaded": model is not None,
+        "features": {
+            "monitoring": MONITORING_ENABLED,
+            "realtime_data": REALTIME_ENABLED,
+            "weather_api": WEATHER_ENABLED
+        }
+    }
+    
+    if MONITORING_ENABLED:
+        monitor = get_monitor()
+        health_status["prediction_counts"] = {
+            energy_type: len(monitor.predictions.get(energy_type, []))
+            for energy_type in ["solar", "wind_offshore", "wind_onshore", "consumption", "price"]
+        }
+    
+    return health_status
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint"""
+    # Try full monitoring first
+    if MONITORING_ENABLED and export_metrics:
+        try:
+            return Response(content=export_metrics(), media_type="text/plain")
+        except:
+            pass
+    
+    # Fall back to simple metrics
+    return Response(content=get_simple_metrics(), media_type="text/plain")
+
+@app.get("/monitoring/status")
+async def monitoring_status():
+    """Get monitoring status for all energy types"""
+    if not MONITORING_ENABLED:
+        raise HTTPException(status_code=503, detail="Monitoring not enabled")
+    
+    monitor = get_monitor()
+    status = {}
+    
+    for energy_type in ["solar", "wind_offshore", "wind_onshore", "consumption", "price"]:
+        status[energy_type] = {
+            "summary": monitor.get_summary_metrics(energy_type),
+            "drift": monitor.detect_drift(energy_type)
+        }
+    
+    return status
+
+@app.get("/weather/current")
+async def current_weather(location: str = "berlin"):
+    """Get current weather conditions"""
+    if not WEATHER_ENABLED:
+        raise HTTPException(status_code=503, detail="Weather API not enabled")
+    
+    client = WeatherAPIClient()
+    return client.get_current_weather(location)
+
+@app.get("/weather/forecast")
+async def weather_forecast(location: str = "berlin", hours: int = 48):
+    """Get weather forecast"""
+    if not WEATHER_ENABLED:
+        raise HTTPException(status_code=503, detail="Weather API not enabled")
+    
+    client = WeatherAPIClient()
+    forecast = client.get_forecast(location, hours)
+    
+    return {
+        "location": location,
+        "forecast_hours": hours,
+        "data": forecast.reset_index().to_dict(orient='records')
     }
 
 @app.get("/models")
@@ -197,6 +318,18 @@ async def list_models():
 
 def generate_forecast(request: ForecastRequest, forecast_type: str = "solar"):
     """Generate forecast for any energy type with realistic patterns"""
+    global request_count, prediction_count, total_latency
+    
+    # Start timing for monitoring
+    start_time = time.time()
+    request_count += 1
+    
+    # Track API request (if monitoring enabled)
+    if MONITORING_ENABLED:
+        try:
+            api_requests_total.labels(endpoint=f"predict_{forecast_type}", status="success").inc()
+        except:
+            pass
     
     # Configuration for different energy types
     configs = {
@@ -325,6 +458,30 @@ def generate_forecast(request: ForecastRequest, forecast_type: str = "solar"):
             # Extend DataFrame
             extended_df.loc[next_timestamp] = pred
         
+        # Record latency and predictions
+        latency = time.time() - start_time
+        prediction_count += len(predictions)
+        total_latency += latency
+        
+        if MONITORING_ENABLED:
+            try:
+                prediction_latency.labels(energy_type=forecast_type).observe(latency)
+                
+                # Record prediction for monitoring
+                monitor = get_monitor()
+                for pred_val, ts in zip(predictions, forecast_timestamps):
+                    record = PredictionRecord(
+                        timestamp=datetime.fromisoformat(ts.replace('Z', '+00:00').split('+')[0]),
+                        energy_type=forecast_type,
+                        actual_value=None,  # Will be updated when actual data arrives
+                        predicted_value=pred_val,
+                        horizon_hours=request.hours,
+                        model_name="XGBoost"
+                    )
+                    monitor.record_prediction(record)
+            except:
+                pass
+        
         return ForecastResponse(
             predictions=predictions,
             timestamps=forecast_timestamps,
@@ -334,6 +491,8 @@ def generate_forecast(request: ForecastRequest, forecast_type: str = "solar"):
         )
         
     except Exception as e:
+        if MONITORING_ENABLED:
+            api_requests_total.labels(endpoint=f"predict_{forecast_type}", status="error").inc()
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 @app.post("/api/predict/solar", response_model=ForecastResponse)
