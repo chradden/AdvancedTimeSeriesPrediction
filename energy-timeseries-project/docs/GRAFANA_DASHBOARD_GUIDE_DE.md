@@ -4,6 +4,17 @@
 
 Das Grafana Dashboard zeigt Echtzeit-Daten zur **Energie-Vorhersage und Modell-Performance**. Es überwacht, wie gut unsere KI-Modelle Stromproduktion und -verbrauch vorhersagen können.
 
+### 📌 Wichtig: 2 Dashboards für 2 Aufgaben
+
+| Dashboard | Localhost | Codespace | Zweck |
+|-----------|-----------|-----------|-------|
+| 📈 **Grafana** (dieses hier) | http://localhost:3000 | https://<codespace-name>-3000.app.github.dev | Performance-Metriken & Monitoring |
+| 🎯 **API-UI** (zum Prognosen generieren) | http://localhost:8000/ui | https://<codespace-name>-8000.app.github.dev/ui | Live-Vorhersagen & Visualisierung |
+
+**Tipp:** Beide Seite-an-Seite öffnen für den vollständigen Überblick!
+
+👉 Siehe auch: [PREDICTIONS_AND_GRAFANA.md](PREDICTIONS_AND_GRAFANA.md) für die Integration
+
 ---
 
 ## 📈 Die Charts erklärt
@@ -262,6 +273,14 @@ Im oben links findest du Einstellungen:
 **F: Warum ändern sich die Zahlen ständig?**
 A: Das System generiert ständig neue Vorhersagen und vergleicht sie mit Realwerten. Das ist normal und gewünscht!
 
+**F: Wo sehe ich die tatsächlichen Prognosen (mit Charts)?**
+A: Im **API-UI Dashboard** unter http://localhost:8000/ui - dort kannst du Prognosen generieren und sofort visualisiert sehen!
+
+**F: Was ist der Unterschied zwischen Grafana und API-UI?**
+A: 
+- **Grafana** = Performance-Monitoring (Model Drift, MAE, MAPE)
+- **API-UI** = Aktuelle Vorhersagen generieren & visualisieren
+
 **F: Was ist der Unterschied zwischen MAE und MAPE?**
 A: MAE sagt dir "um wie viel MW", MAPE sagt dir "um wie viel %". Benutze MAPE für Vergleiche zwischen unterschiedlich großen Werten.
 
@@ -273,19 +292,25 @@ A: Nein! Es speichert alle Daten. Beim Neustart sind alle Metriken wieder da.
 
 ---
 
-## 📞 Hilfe bei Problemen
+## 🔗 Quicklinks
 
-Wenn der Dashboard leer ist:
-1. Seite mit F5 neu laden
-2. Zeitraum ändern (z.B. auf "Last 1 hour")
-3. Auf "Refresh" oben rechts klicken
-4. Im Codespace: API läuft? → `docker compose ps` prüfen
-
-Wenn Werte falsch sind:
-1. Prometheus neu laden: http://localhost:9090
-2. Metriken suchen: `energy_*` eingeben
-3. Aktuelle Werte sehen und vergleichen
+- 📊 **API Prognose-Dashboard:** http://localhost:8000/ui
+- 📈 **Grafana Monitoring:** http://localhost:3000
+- 🔧 **API Dokumentation:** http://localhost:8000/docs
+- 📚 **Integration Guide:** [PREDICTIONS_AND_GRAFANA.md](PREDICTIONS_AND_GRAFANA.md)
 
 ---
 
-**Version:** 1.0 | **Datum:** 2026-01-29 | **System:** Energy Forecasting Monitoring
+## 💬 Häufige Fragen
+
+**F: Warum ändern sich die Zahlen ständig?**
+A: Das System generiert ständig neue Vorhersagen und vergleicht sie mit Realwerten. Das ist normal und gewünscht!
+
+**F: Was ist der Unterschied zwischen MAE und MAPE?**
+A: MAE sagt dir "um wie viel MW", MAPE sagt dir "um wie viel %". Benutze MAPE für Vergleiche zwischen unterschiedlich großen Werten.
+
+**F: Warum ist Drift plötzlich 1.0?**
+A: Das Modell performt viel schlechter als am Anfang. Wahrscheinlich Jahreszeit oder Trend hat sich geändert. Zeit für Retraining!
+
+**F: Kann das Dashboard über Nacht kaputt gehen?**
+A: Nein! Es speichert alle Daten. Beim Neustart sind alle Metriken wieder da.

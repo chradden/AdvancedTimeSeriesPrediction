@@ -17,11 +17,16 @@
 docker-compose up
 ```
 
-**Open**: http://localhost:8000/ui
-
-### API Documentation
-
-**Swagger UI**: http://localhost:8000/docs
+**Open**:
+- 🎯 **Prognose-UI**: 
+  - Localhost: http://localhost:8000/ui
+  - Codespace: https://<codespace-name>-8000.app.github.dev/ui
+- 📈 **Grafana Monitoring**: 
+  - Localhost: http://localhost:3000 (admin/admin)
+  - Codespace: https://<codespace-name>-3000.app.github.dev (admin/admin)
+- 🔧 **API Docs**: 
+  - Localhost: http://localhost:8000/docs
+  - Codespace: https://<codespace-name>-8000.app.github.dev/docs
 
 ## 🎯 Project Results
 

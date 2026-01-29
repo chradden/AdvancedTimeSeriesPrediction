@@ -21,15 +21,15 @@ cd AdvancedTimeSeriesPrediction/energy-timeseries-project
 That's it! ✨
 
 **What gets started:**
-- ✅ FastAPI (http://localhost:8000)
-- ✅ Grafana Dashboard (http://localhost:3000)
-- ✅ Prometheus Metrics (http://localhost:9090)
+- ✅ FastAPI (Localhost: http://localhost:8000 | Codespace: https://<codespace-name>-8000.app.github.dev)
+- ✅ Grafana Dashboard (Localhost: http://localhost:3000 | Codespace: https://<codespace-name>-3000.app.github.dev)
+- ✅ Prometheus Metrics (Localhost: http://localhost:9090 | Codespace: https://<codespace-name>-9090.app.github.dev)
 - ✅ Automatic monitoring & predictions
 
 **Next steps in Codespaces:**
 1. Open "PORTS" panel in VS Code
 2. Make ports 8000, 3000, 9090 public (eye icon)
-3. Open Grafana: http://localhost:3000 (admin/admin)
+3. Open Grafana: https://<codespace-name>-3000.app.github.dev (admin/admin)
 
 ---
 
@@ -42,7 +42,9 @@ cd AdvancedTimeSeriesPrediction/energy-timeseries-project
 docker-compose up
 ```
 
-**Access**: http://localhost:8000/ui
+**Access**: 
+- Localhost: http://localhost:8000/ui
+- Codespace: https://<codespace-name>-8000.app.github.dev/ui
 
 ### With monitoring profile:
 
@@ -75,7 +77,9 @@ python api_simple.py
 
 ### Step 4: Open the Dashboard
 
-**Web UI**: http://localhost:8000/ui
+**Web UI**: 
+- Localhost: http://localhost:8000/ui
+- Codespace: https://<codespace-name>-8000.app.github.dev/ui
 
 ---
 
