@@ -67,7 +67,6 @@ python run_xgboost_tuning.py --energy-type price
 
 ## 🖼️ Mittlere Panels
 
-![Dashboard Middle - MAE & MAPE Metrics](images/dashboard_bottom.png)
 
 *Hinweis: Dieses Bild zeigt auch die unteren Panels (Data Quality, Latency, Request Rate)*
 
@@ -124,7 +123,7 @@ python run_xgboost_tuning.py --energy-type price
 
 ## 🖼️ Untere Panels
 
-*Siehe Bild oben - Die unteren Panels (Data Quality Score, Prediction Latency, API Request Rate) sind im zweiten Screenshot enthalten.*
+![Dashboard Middle - MAE & MAPE Metrics](images/dashboard_bottom.png)
 
 ### 5️⃣ Data Quality Score (links, Gauges)
 
