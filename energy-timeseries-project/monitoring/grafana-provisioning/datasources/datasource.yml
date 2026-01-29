@@ -1,3 +1,12 @@
-# Datasource will be created manually after login
+# Datasource is provisioned automatically
 apiVersion: 1
-datasources: []
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s

@@ -1,0 +1,81 @@
+{
+  "dashboard": {
+    "title": "Energy Forecasting Monitoring - Simple",
+    "uid": "energy-simple",
+    "tags": ["energy"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 0,
+    "refresh": "30s",
+    "time": {"from": "now-1h", "to": "now"},
+    "panels": [
+      {
+        "id": 1,
+        "title": "Prediction Count by Energy Type",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 0, "w": 24, "h": 10},
+        "targets": [
+          {
+            "expr": "rate(energy_predictions_total[5m])",
+            "refId": "A",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "-1"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "options": {
+          "legend": {"calcs": [], "displayMode": "list"}
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Request Rate",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 10, "w": 12, "h": 10},
+        "targets": [
+          {
+            "expr": "rate(energy_api_requests_total[5m])",
+            "refId": "A",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "-1"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Prediction Latency (p95)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 10, "w": 12, "h": 10},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(energy_prediction_latency_seconds_bucket[5m]))",
+            "refId": "A",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "-1"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

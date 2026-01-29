@@ -15,7 +15,7 @@
     {
       "title": "Prediction Count by Energy Type",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "rate(energy_predictions_total[5m])",
@@ -28,7 +28,7 @@
     {
       "title": "Model Drift Score",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "energy_model_drift_score",
@@ -52,7 +52,7 @@
     {
       "title": "Prediction MAE (50 predictions window)",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "energy_prediction_mae{window=\"50_predictions\"}",
@@ -65,7 +65,7 @@
     {
       "title": "Prediction MAPE (%)",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "energy_prediction_mape{window=\"50_predictions\"}",
@@ -78,7 +78,7 @@
     {
       "title": "Data Quality Score",
       "type": "gauge",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "energy_data_quality_score",
@@ -104,7 +104,7 @@
     {
       "title": "Prediction Latency (p95)",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "histogram_quantile(0.95, rate(energy_prediction_latency_seconds_bucket[5m]))",
@@ -117,7 +117,7 @@
     {
       "title": "API Request Rate",
       "type": "timeseries",
-      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
           "expr": "rate(energy_api_requests_total[5m])",

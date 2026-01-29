@@ -7,31 +7,52 @@ Get the Energy Forecasting Dashboard running in 2 minutes!
 - Docker & Docker Compose installed
 - OR Python 3.10+ with pip
 
-## 🐳 Option 1: Docker (Recommended)
+## 🐳 Option 1: Docker with Monitoring Stack (Recommended!)
 
-### Step 1: Clone the Repository
+### For GitHub Codespaces or Local Development
+
+This is the **easiest way** to get everything running with Grafana Monitoring!
 
 ```bash
-git clone https://github.com/chradden/AdvancedTimeSeriesPrediction.git
 cd AdvancedTimeSeriesPrediction/energy-timeseries-project
+./start_monitoring.sh
 ```
 
-### Step 2: Start the Application
+That's it! ✨
 
-```bash
-docker-compose up
-```
+**What gets started:**
+- ✅ FastAPI (http://localhost:8000)
+- ✅ Grafana Dashboard (http://localhost:3000)
+- ✅ Prometheus Metrics (http://localhost:9090)
+- ✅ Automatic monitoring & predictions
 
-### Step 3: Open the Dashboard
-
-**Web UI**: http://localhost:8000/ui
-**API Docs**: http://localhost:8000/docs
-
-That's it! 🎉
+**Next steps in Codespaces:**
+1. Open "PORTS" panel in VS Code
+2. Make ports 8000, 3000, 9090 public (eye icon)
+3. Open Grafana: http://localhost:3000 (admin/admin)
 
 ---
 
-## 🐍 Option 2: Python Local
+## 🐳 Option 2: Standard Docker Compose
+
+### Just the API (no monitoring):
+
+```bash
+cd AdvancedTimeSeriesPrediction/energy-timeseries-project
+docker-compose up
+```
+
+**Access**: http://localhost:8000/ui
+
+### With monitoring profile:
+
+```bash
+docker-compose --profile monitoring up
+```
+
+---
+
+## 🐍 Option 3: Python Local (Advanced)
 
 ### Step 1: Clone & Navigate
 
@@ -58,25 +79,36 @@ python api_simple.py
 
 ---
 
-## 🌐 GitHub Codespaces
+## 📊 Understanding the Grafana Dashboard
 
-If you're running in a Codespace:
+### The 7 Key Charts Explained
 
-1. Start the app: `docker-compose up`
-2. The port will be automatically forwarded
-3. Click on the "Ports" tab and open port 8000
-4. Access the UI at the provided URL + `/ui`
+**1. Prediction Count** - How many forecasts have been generated?
+**2. Model Drift Score** - Is our model still accurate? (0=good, 1=bad)
+**3. Prediction MAE** - Average error in MW (lower is better)
+**4. Prediction MAPE** - Average error in % (lower is better)
+**5. Data Quality Score** - Are our input data clean? (higher is better)
+**6. Prediction Latency** - How fast are predictions? (lower is faster)
+**7. API Request Rate** - How many users are using the system?
+
+👉 **Read the full guide**: [docs/GRAFANA_DASHBOARD_GUIDE_DE.md](energy-timeseries-project/docs/GRAFANA_DASHBOARD_GUIDE_DE.md)
 
 ---
 
-## 📊 Using the Dashboard
+## 🔄 GitHub Codespaces Setup
 
-### Generate a Forecast
+If you're running in a Codespaces environment:
 
-1. **Select Energy Type**: Solar, Wind Offshore, Wind Onshore, Consumption, or Price
-2. **Set Forecast Horizon**: 1-168 hours (default: 24h)
-3. **Click "Vorhersage generieren"**
-4. View the results in the interactive chart and table
+```bash
+# Simple 2-step setup:
+cd energy-timeseries-project
+./start_monitoring.sh
+
+# Then:
+# 1. Look for port notifications
+# 2. Or manually: open PORTS tab → make 8000, 3000 public
+# 3. Click "Open in Browser" on port 3000
+```
 
 ### API Example
 

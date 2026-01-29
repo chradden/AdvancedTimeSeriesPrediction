@@ -16,8 +16,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      - prometheus
 
-  # Optional: Add monitoring
+  # Monitoring Stack - Now included by default!
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -26,8 +28,12 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-    profiles:
-      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   grafana:
     image: grafana/grafana:latest
@@ -35,12 +41,25 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./monitoring/grafana-provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/energy-forecasting.json
-    profiles:
-      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - prometheus
 
 volumes:
   grafana-storage:
+    driver: local
+
+# Note: Monitoring stack is now enabled by default!
+# To run without monitoring, use: docker compose up -d api only
+# To run full stack: docker compose up
+# Or with legacy profile syntax: docker compose --profile monitoring up

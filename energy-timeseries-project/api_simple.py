@@ -23,6 +23,11 @@ import uvicorn
 import os
 import sys
 import time
+import threading
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add src to path
 sys.path.insert(0, '/app/src')
@@ -204,6 +209,69 @@ except Exception as e:
     print("⚠️  Using DUMMY model for demo")
 
 # ============================================================================
+# Background Monitoring Initialization
+# ============================================================================
+
+def initialize_monitoring():
+    """Initialize baselines and setup background actuals generation"""
+    if not MONITORING_ENABLED:
+        return
+    
+    try:
+        monitor = get_monitor()
+        
+        # Set baseline metrics for each energy type
+        baseline_configs = {
+            "solar": {"mae": 249.03, "mape": 3.2, "r2": 0.9825},
+            "wind_offshore": {"mae": 16.0, "mape": 2.0, "r2": 0.996},
+            "wind_onshore": {"mae": 252.0, "mape": 6.1, "r2": 0.969},
+            "consumption": {"mae": 484.0, "mape": 0.9, "r2": 0.996},
+            "price": {"mae": 7.25, "mape": 11.1, "r2": 0.952}
+        }
+        
+        for energy_type, metrics in baseline_configs.items():
+            monitor.set_baseline_metrics(energy_type, metrics)
+            logger.info(f"✅ Baseline set for {energy_type}")
+        
+        # Start background task to generate dummy actuals
+        threading.Thread(target=generate_dummy_actuals, daemon=True).start()
+        
+    except Exception as e:
+        logger.warning(f"Could not initialize monitoring: {e}")
+
+def generate_dummy_actuals():
+    """Background task: periodically generate dummy actual values for recent predictions"""
+    if not MONITORING_ENABLED:
+        return
+    
+    while True:
+        try:
+            time.sleep(30)  # Generate actuals every 30 seconds
+            monitor = get_monitor()
+            
+            for energy_type in ["solar", "wind_offshore", "wind_onshore", "consumption", "price"]:
+                predictions = monitor.predictions.get(energy_type, [])
+                
+                # Update recent predictions with dummy actuals
+                for record in predictions[-10:]:  # Last 10 predictions
+                    if record.actual_value is None:
+                        # Generate realistic dummy actual (within ±10% of prediction)
+                        variance = record.predicted_value * 0.1
+                        actual = record.predicted_value + np.random.normal(0, variance)
+                        record.actual_value = max(0, actual)
+                
+                # Update error metrics
+                monitor._update_error_metrics(energy_type)
+                
+                # Detect drift
+                drift_result = monitor.detect_drift(energy_type)
+                if drift_result.get('drift_detected'):
+                    logger.info(f"⚠️  Drift detected for {energy_type}: {drift_result['degradation_pct']:.1f}% degradation")
+                
+        except Exception as e:
+            logger.debug(f"Background task error: {e}")
+
+# ============================================================================
 # API Endpoints
 # ============================================================================
 
@@ -215,6 +283,12 @@ async def root():
 static_dir = "/app/static"
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize monitoring on startup"""
+    initialize_monitoring()
+    logger.info("🚀 API startup complete with monitoring initialized")
 
 @app.get("/ui")
 async def ui():
@@ -423,6 +497,14 @@ def generate_forecast(request: ForecastRequest, forecast_type: str = "solar"):
         historical_df = pd.DataFrame({
             'value': historical_values
         }, index=timestamps)
+
+        # Update data quality metric for monitoring (if enabled)
+        if MONITORING_ENABLED:
+            try:
+                monitor = get_monitor()
+                monitor.check_data_quality(historical_df, forecast_type)
+            except:
+                pass
         
         # Rolling forecast
         predictions = []
