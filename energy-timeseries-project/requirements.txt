@@ -50,6 +50,12 @@ ipywidgets>=8.1.0
 # Experiment Tracking (optional)
 # mlflow>=2.7.0
 
+# Production API (NEW - Session 5)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+python-multipart>=0.0.6
+
 # Development
 black>=23.0.0
 flake8>=6.0.0
