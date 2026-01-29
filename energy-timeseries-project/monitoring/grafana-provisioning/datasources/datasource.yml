@@ -1,0 +1,3 @@
+# Datasource will be created manually after login
+apiVersion: 1
+datasources: []

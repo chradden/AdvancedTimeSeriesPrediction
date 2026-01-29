@@ -37,6 +37,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/energy-forecasting.json
     profiles:
       - monitoring
 

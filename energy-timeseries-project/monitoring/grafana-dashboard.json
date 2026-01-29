@@ -1,116 +1,131 @@
 {
-  "dashboard": {
-    "title": "Energy Forecasting Monitoring",
-    "tags": ["energy", "forecasting", "ml"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "title": "Prediction Count by Energy Type",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(energy_predictions_total[5m])",
-            "legendFormat": "{{energy_type}} - {{model}}"
-          }
-        ],
-        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
-      },
-      {
-        "title": "Model Drift Score",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "energy_model_drift_score",
-            "legendFormat": "{{energy_type}}"
-          }
-        ],
-        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
-        "alert": {
-          "conditions": [
-            {
-              "evaluator": {"params": [0.3], "type": "gt"},
-              "operator": {"type": "and"},
-              "query": {"params": ["A", "5m", "now"]},
-              "reducer": {"params": [], "type": "avg"},
-              "type": "query"
-            }
-          ]
-        }
-      },
-      {
-        "title": "Prediction MAE (50 predictions window)",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "energy_prediction_mae{window=\"50_predictions\"}",
-            "legendFormat": "{{energy_type}}"
-          }
-        ],
-        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
-      },
-      {
-        "title": "Prediction MAPE (%)",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "energy_prediction_mape{window=\"50_predictions\"}",
-            "legendFormat": "{{energy_type}}"
-          }
-        ],
-        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
-      },
-      {
-        "title": "Data Quality Score",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "energy_data_quality_score",
-            "legendFormat": "{{energy_type}}"
-          }
-        ],
-        "gridPos": {"x": 0, "y": 16, "w": 8, "h": 8},
-        "fieldConfig": {
-          "defaults": {
-            "min": 0,
-            "max": 1,
-            "thresholds": {
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 0.5, "color": "yellow"},
-                {"value": 0.8, "color": "green"}
-              ]
-            }
-          }
-        }
-      },
-      {
-        "title": "Prediction Latency (p95)",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(energy_prediction_latency_seconds_bucket[5m]))",
-            "legendFormat": "{{energy_type}}"
-          }
-        ],
-        "gridPos": {"x": 8, "y": 16, "w": 8, "h": 8}
-      },
-      {
-        "title": "API Request Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(energy_api_requests_total[5m])",
-            "legendFormat": "{{endpoint}} - {{status}}"
-          }
-        ],
-        "gridPos": {"x": 16, "y": 16, "w": 8, "h": 8}
-      }
-    ],
-    "refresh": "30s",
-    "time": {"from": "now-1h", "to": "now"},
-    "timepicker": {
-      "refresh_intervals": ["10s", "30s", "1m", "5m"]
-    }
+  "title": "Energy Forecasting Monitoring",
+  "uid": "energy-forecasting-monitoring",
+  "tags": ["energy", "forecasting", "ml"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {
+    "refresh_intervals": ["10s", "30s", "1m", "5m"]
   },
-  "overwrite": true
+  "templating": {"list": []},
+  "panels": [
+    {
+      "title": "Prediction Count by Energy Type",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "rate(energy_predictions_total[5m])",
+          "legendFormat": "{{energy_type}} - {{model}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "title": "Model Drift Score",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "energy_model_drift_score",
+          "legendFormat": "{{energy_type}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {"params": [0.3], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": {"params": ["A", "5m", "now"]},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Prediction MAE (50 predictions window)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "energy_prediction_mae{window=\"50_predictions\"}",
+          "legendFormat": "{{energy_type}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+    },
+    {
+      "title": "Prediction MAPE (%)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "energy_prediction_mape{window=\"50_predictions\"}",
+          "legendFormat": "{{energy_type}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+    },
+    {
+      "title": "Data Quality Score",
+      "type": "gauge",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "energy_data_quality_score",
+          "legendFormat": "{{energy_type}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 16, "w": 8, "h": 8},
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 0.5, "color": "yellow"},
+              {"value": 0.8, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Prediction Latency (p95)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(energy_prediction_latency_seconds_bucket[5m]))",
+          "legendFormat": "{{energy_type}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 8, "y": 16, "w": 8, "h": 8}
+    },
+    {
+      "title": "API Request Rate",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {
+          "expr": "rate(energy_api_requests_total[5m])",
+          "legendFormat": "{{endpoint}} - {{status}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {"x": 16, "y": 16, "w": 8, "h": 8}
+    }
+  ]
 }
