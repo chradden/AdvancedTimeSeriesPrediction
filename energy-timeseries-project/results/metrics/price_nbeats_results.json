@@ -1,0 +1,8 @@
+{
+  "model": "N-BEATS",
+  "r2": -0.2882944043088713,
+  "rmse": 80.16751049045246,
+  "mae": 53.916652741279734,
+  "training_time_minutes": 4.846654470761617,
+  "architecture": "Interpretable (Trend+Seasonality)"
+}
