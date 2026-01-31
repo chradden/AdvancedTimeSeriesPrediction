@@ -7,6 +7,17 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Avg R²](https://img.shields.io/badge/Avg%20R²-0.978-brightgreen.svg)]()
 
+---
+
+## 📋 Schnellzugang
+
+**📌 Wichtigste Dokumente:**
+- **[`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md)** - Komplette Projektübersicht & aktuelle Strategie
+- [`QUICKSTART.md`](QUICKSTART.md) - Schnelleinstieg in 5 Minuten
+- [`energy-timeseries-project/README.md`](energy-timeseries-project/README.md) - Technische Details
+
+---
+
 ## 🎯 Project Overview
 
 Production-ready forecasting system for the German energy market, comparing 15+ different modeling approaches to identify optimal forecasting methods for different energy types.
