@@ -42,8 +42,10 @@ class SMARDDataLoader:
     BASE_URL = "https://www.smard.de/app"
     
     # Filter codes
+    # NOTE: Filter 1223 liefert FALSCHE Daten (invertiert/nicht Solar)
+    # Filter 4068 = Korrekte Solar-Daten (Generation Actual)
     FILTERS = {
-        'solar': 1223,
+        'solar': 4068,  # ✅ KORRIGIERT: War 1223 (falsch!) → Jetzt 4068 (korrekt)
         'wind_offshore': 1224,
         'wind_onshore': 1225,
         'consumption': 410,
