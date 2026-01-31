@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-WIND ONSHORE FORECASTING - EXTENDED PIPELINE (9 Phases)
-Based on Price pipeline, adapted for Wind Onshore
+CONSUMPTION FORECASTING - EXTENDED PIPELINE (9 Phases)
+Based on Price pipeline, adapted for Consumption
 """
 
 import pandas as pd
@@ -50,9 +50,9 @@ def evaluate_model(y_true, y_pred, model_name):
 # =============================================================================
 # SETUP
 # =============================================================================
-print_section("WIND ONSHORE FORECASTING - EXTENDED PIPELINE (9 PHASES)")
+print_section("CONSUMPTION FORECASTING - EXTENDED PIPELINE (9 PHASES)")
 
-data_path = Path('data/raw/wind_onshore_2022-01-01_2024-12-31_hour.csv')
+data_path = Path('data/raw/consumption_2022-01-01_2024-12-31_hour.csv')
 proc_dir = Path('data/processed')
 results_dir = Path('results')
 figures_dir = results_dir / 'figures'
@@ -74,31 +74,31 @@ df = pd.read_csv(data_path)
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 df.set_index('timestamp', inplace=True)
 df.sort_index(inplace=True)
-df.rename(columns={'value': 'wind_power'}, inplace=True)
+df.rename(columns={'value': 'consumption'}, inplace=True)
 print(f"✅ Loaded: {df.shape}")
 
 print("\n[2/3] Computing statistics...")
 stats = {
     'count': len(df),
-    'mean': df['wind_power'].mean(),
-    'std': df['wind_power'].std(),
-    'min': df['wind_power'].min(),
-    'max': df['wind_power'].max(),
-    'cv': df['wind_power'].std() / df['wind_power'].mean(),
-    'zeros': (df['wind_power'] == 0).sum(),
-    'zero_pct': (df['wind_power'] == 0).sum() / len(df) * 100
+    'mean': df['consumption'].mean(),
+    'std': df['consumption'].std(),
+    'min': df['consumption'].min(),
+    'max': df['consumption'].max(),
+    'cv': df['consumption'].std() / df['consumption'].mean(),
+    'zeros': (df['consumption'] == 0).sum(),
+    'zero_pct': (df['consumption'] == 0).sum() / len(df) * 100
 }
 print(f"✅ Mean={stats['mean']:.2f} MW, Std={stats['std']:.2f} MW, CV={stats['cv']:.3f}")
 print(f"   Zero values: {stats['zeros']} ({stats['zero_pct']:.2f}%)")
 
 print("\n[3/3] Creating visualizations...")
 fig, ax = plt.subplots(figsize=(16, 5))
-ax.plot(df.index, df['wind_power'], linewidth=0.5, alpha=0.7)
-ax.set_title('Wind Onshore Power - Timeline', fontweight='bold')
+ax.plot(df.index, df['consumption'], linewidth=0.5, alpha=0.7)
+ax.set_title('Consumption Power - Timeline', fontweight='bold')
 ax.set_ylabel('Power (MW)')
 ax.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig(figures_dir / 'wind_onshore_extended_01_timeline.png', dpi=150, bbox_inches='tight')
+plt.savefig(figures_dir / 'consumption_extended_01_timeline.png', dpi=150, bbox_inches='tight')
 plt.close()
 print("✅ Exploration complete")
 
@@ -119,15 +119,15 @@ df_feat['hour_sin'] = np.sin(2 * np.pi * df_feat['hour'] / 24)
 df_feat['hour_cos'] = np.cos(2 * np.pi * df_feat['hour'] / 24)
 
 for lag in [1, 2, 3, 6, 12, 24, 48, 168]:
-    df_feat[f'lag_{lag}'] = df_feat['wind_power'].shift(lag)
+    df_feat[f'lag_{lag}'] = df_feat['consumption'].shift(lag)
 
 for window in [3, 6, 12, 24]:
-    df_feat[f'rolling_mean_{window}'] = df_feat['wind_power'].shift(1).rolling(window).mean()
-    df_feat[f'rolling_std_{window}'] = df_feat['wind_power'].shift(1).rolling(window).std()
+    df_feat[f'rolling_mean_{window}'] = df_feat['consumption'].shift(1).rolling(window).mean()
+    df_feat[f'rolling_std_{window}'] = df_feat['consumption'].shift(1).rolling(window).std()
 
-df_feat['diff_1'] = df_feat['wind_power'].diff(1)
-df_feat['diff_24'] = df_feat['wind_power'].diff(24)
-df_feat['is_zero'] = (df_feat['wind_power'] == 0).astype(int)
+df_feat['diff_1'] = df_feat['consumption'].diff(1)
+df_feat['diff_24'] = df_feat['consumption'].diff(24)
+df_feat['is_zero'] = (df_feat['consumption'] == 0).astype(int)
 
 df_feat = df_feat.dropna()
 print(f"✅ Total features: {len(df_feat.columns)-1}, Rows: {len(df_feat)}")
@@ -148,10 +148,10 @@ print(f"Train: {len(train)} ({len(train)/len(df_feat)*100:.1f}%)")
 print(f"Val:   {len(val)} ({len(val)/len(df_feat)*100:.1f}%)")
 print(f"Test:  {len(test)} ({len(test)/len(df_feat)*100:.1f}%)")
 
-feature_cols = [c for c in df_feat.columns if c != 'wind_power']
-X_train, y_train = train[feature_cols].values, train['wind_power'].values
-X_val, y_val = val[feature_cols].values, val['wind_power'].values
-X_test, y_test = test[feature_cols].values, test['wind_power'].values
+feature_cols = [c for c in df_feat.columns if c != 'consumption']
+X_train, y_train = train[feature_cols].values, train['consumption'].values
+X_val, y_val = val[feature_cols].values, val['consumption'].values
+X_test, y_test = test[feature_cols].values, test['consumption'].values
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -161,15 +161,15 @@ print("✅ Features scaled")
 
 # Save processed data
 train_proc = pd.DataFrame(X_train_scaled, columns=feature_cols, index=train.index)
-train_proc['wind_power'] = y_train
+train_proc['consumption'] = y_train
 val_proc = pd.DataFrame(X_val_scaled, columns=feature_cols, index=val.index)
-val_proc['wind_power'] = y_val
+val_proc['consumption'] = y_val
 test_proc = pd.DataFrame(X_test_scaled, columns=feature_cols, index=test.index)
-test_proc['wind_power'] = y_test
+test_proc['consumption'] = y_test
 
-train_proc.to_csv(proc_dir / 'wind_onshore_train.csv')
-val_proc.to_csv(proc_dir / 'wind_onshore_val.csv')
-test_proc.to_csv(proc_dir / 'wind_onshore_test.csv')
+train_proc.to_csv(proc_dir / 'consumption_train.csv')
+val_proc.to_csv(proc_dir / 'consumption_val.csv')
+test_proc.to_csv(proc_dir / 'consumption_test.csv')
 print("✅ Processed data saved")
 
 # =============================================================================
@@ -312,7 +312,7 @@ print_section("PHASE 9: FINAL MODEL COMPARISON")
 results_df = pd.DataFrame(all_results).sort_values('R²', ascending=False)
 print("\n" + results_df.to_string(index=False))
 
-results_df.to_csv(metrics_dir / 'wind_onshore_all_models_extended.csv', index=False)
+results_df.to_csv(metrics_dir / 'consumption_all_models_extended.csv', index=False)
 print(f"\n✅ Results saved")
 
 best = results_df.iloc[0]
@@ -358,7 +358,7 @@ axes[1, 1].set_title('Performance by Category', fontweight='bold')
 axes[1, 1].grid(alpha=0.3, axis='x')
 
 plt.tight_layout()
-plt.savefig(figures_dir / 'wind_onshore_extended_09_final_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig(figures_dir / 'consumption_extended_09_final_comparison.png', dpi=150, bbox_inches='tight')
 plt.close()
 print("✅ Comparison chart saved")
 
@@ -378,7 +378,7 @@ ax.set_xlabel('Importance')
 ax.set_title('Feature Importance - Top 20', fontweight='bold')
 ax.grid(alpha=0.3, axis='x')
 plt.tight_layout()
-plt.savefig(figures_dir / 'wind_onshore_extended_feature_importance.png', dpi=150, bbox_inches='tight')
+plt.savefig(figures_dir / 'consumption_extended_feature_importance.png', dpi=150, bbox_inches='tight')
 plt.close()
 
 # =============================================================================
@@ -405,7 +405,7 @@ summary = {
     }
 }
 
-with open(metrics_dir / 'wind_onshore_extended_summary.json', 'w') as f:
+with open(metrics_dir / 'consumption_extended_summary.json', 'w') as f:
     json.dump(summary, f, indent=2)
 
 print(f"""
@@ -420,10 +420,10 @@ print(f"""
    MAE = {summary['best_mae']:.2f} MW
 
 📁 OUTPUT FILES:
-   ✅ Extended comparison: wind_onshore_extended_09_final_comparison.png
-   ✅ Feature importance: wind_onshore_extended_feature_importance.png
-   ✅ Results CSV: wind_onshore_all_models_extended.csv
-   ✅ Summary JSON: wind_onshore_extended_summary.json
+   ✅ Extended comparison: consumption_extended_09_final_comparison.png
+   ✅ Feature importance: consumption_extended_feature_importance.png
+   ✅ Results CSV: consumption_all_models_extended.csv
+   ✅ Summary JSON: consumption_extended_summary.json
 
 ⭐ TOP 5 FEATURES:
 """)
@@ -431,5 +431,5 @@ for i, feat in enumerate(summary['top_5_features'], 1):
     print(f"   {i}. {feat}")
 
 print("\n" + "="*80)
-print("✨ WIND ONSHORE FORECASTING EXTENDED PIPELINE (9 PHASES) COMPLETED!")
+print("✨ CONSUMPTION FORECASTING EXTENDED PIPELINE (9 PHASES) COMPLETED!")
 print("="*80)
