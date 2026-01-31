@@ -1,14 +1,14 @@
 {
-  "execution_timestamp": "2026-01-31T23:22:10.760576",
+  "execution_timestamp": "2026-01-31T23:18:57.955413",
   "phases_completed": 9,
-  "total_models": 6,
+  "total_models": 7,
   "data_points": 26257,
   "features_created": 27,
   "best_model": "Random Forest",
   "best_category": "ML Tree",
   "best_r2": 0.9996722548800927,
-  "best_rmse": 33.955574690386605,
-  "best_mae": 13.099450347537918,
+  "best_rmse": 33.9555746903866,
+  "best_mae": 13.099450347537912,
   "top_5_features": [
     "diff_1",
     "lag_1",
@@ -19,6 +19,6 @@
   "models_by_category": {
     "Baseline": 3,
     "ML_Tree": 3,
-    "Deep_Learning": 0
+    "Deep_Learning": 1
   }
 }
