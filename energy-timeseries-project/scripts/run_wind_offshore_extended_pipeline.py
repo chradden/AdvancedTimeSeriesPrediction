@@ -38,6 +38,7 @@ sns.set_palette('husl')
 
 # Runtime flags (safe defaults for CI/containers)
 RUN_AUTO_ARIMA = True
+RUN_ADVANCED_MODELS = False  # N-BEATS/N-HiTS überspringen (zu langsam)
 
 
 def print_section(title: str) -> None:
@@ -139,7 +140,21 @@ df_clean = prep.handle_missing_values(df, value_col='value', method='interpolate
 missing_after = df_clean['value'].isna().sum()
 print(f"✅ Missing before: {missing_before}, after: {missing_after}")
 
-print("\n[2/4] Outlier analysis (IQR)...")
+# CRITICAL FIX: Wind Offshore hatte 9-monatigen Stillstand (Apr 2023 - Jan 2024)
+# Nutze nur Daten VOR dem Stillstand für saubere Modellierung
+print("\n⚠️  WICHTIG: Erkenne Stillstandsperiode...")
+zeros = df_clean['value'] == 0
+zero_count = zeros.sum()
+print(f"   Nullwerte gefunden: {zero_count} ({zero_count/len(df_clean)*100:.1f}%)")
+if zero_count > 100:  # Signifikante Stillstandsperiode
+    first_zero_idx = df_clean[zeros].index[0]
+    cutoff_date = df_clean.loc[first_zero_idx, 'timestamp']
+    print(f"   Stillstand ab: {cutoff_date}")
+    print(f"   ➡️  Nutze nur Daten VOR Stillstand für Training")
+    df_clean = df_clean[df_clean['timestamp'] < cutoff_date].reset_index(drop=True)
+    print(f"   Verbleibende Daten: {len(df_clean)}")
+
+print("\n[2/4] Outlier analysis (IQR) - auf bereinigte Daten...")
 q1 = df_clean['value'].quantile(0.25)
 q3 = df_clean['value'].quantile(0.75)
 iqr = q3 - q1
@@ -562,53 +577,57 @@ print_section("PHASE 8: ADVANCED MODELS (N-BEATS, N-HiTS, TFT)")
 
 advanced_results = {}
 
-try:
-    from darts import TimeSeries
-    from darts.models import NBEATSModel, NHiTSModel
-    from darts.dataprocessing.transformers import Scaler
+if RUN_ADVANCED_MODELS:
+    try:
+        from darts import TimeSeries
+        from darts.models import NBEATSModel, NHiTSModel
+        from darts.dataprocessing.transformers import Scaler
 
-    print("✅ Darts verfügbar - starte N-BEATS/N-HiTS (kurz)...")
-    train_series = TimeSeries.from_dataframe(train_df, time_col='timestamp', value_cols='value', freq='H')
-    val_series = TimeSeries.from_dataframe(val_df, time_col='timestamp', value_cols='value', freq='H')
-    test_series = TimeSeries.from_dataframe(test_df, time_col='timestamp', value_cols='value', freq='H')
+        print("✅ Darts verfügbar - starte N-BEATS/N-HiTS (kurz)...")
+        train_series = TimeSeries.from_dataframe(train_df, time_col='timestamp', value_cols='value', freq='H')
+        val_series = TimeSeries.from_dataframe(val_df, time_col='timestamp', value_cols='value', freq='H')
+        test_series = TimeSeries.from_dataframe(test_df, time_col='timestamp', value_cols='value', freq='H')
 
-    scaler_adv = Scaler()
-    train_scaled_series = scaler_adv.fit_transform(train_series)
-    val_scaled_series = scaler_adv.transform(val_series)
+        scaler_adv = Scaler()
+        train_scaled_series = scaler_adv.fit_transform(train_series)
+        val_scaled_series = scaler_adv.transform(val_series)
 
-    print("\n[1/2] N-BEATS...")
-    nbeats = NBEATSModel(
-        input_chunk_length=24,
-        output_chunk_length=24,
-        n_epochs=10,
-        random_state=42,
-        batch_size=64,
-        generic_architecture=True,
-        pl_trainer_kwargs={"enable_progress_bar": False}
-    )
-    nbeats.fit(train_scaled_series, val_series=val_scaled_series, verbose=False)
-    nbeats_pred = nbeats.predict(n=len(test_series))
-    nbeats_pred = scaler_adv.inverse_transform(nbeats_pred).values().flatten()
-    add_metrics(advanced_results, 'N-BEATS', y_test, nbeats_pred, y_train=y_train)
-    print("✅ N-BEATS done")
+        print("\n[1/2] N-BEATS...")
+        nbeats = NBEATSModel(
+            input_chunk_length=24,
+            output_chunk_length=24,
+            n_epochs=10,
+            random_state=42,
+            batch_size=64,
+            generic_architecture=True,
+            pl_trainer_kwargs={"enable_progress_bar": False}
+        )
+        nbeats.fit(train_scaled_series, val_series=val_scaled_series, verbose=False)
+        nbeats_pred = nbeats.predict(n=len(test_series))
+        nbeats_pred = scaler_adv.inverse_transform(nbeats_pred).values().flatten()
+        add_metrics(advanced_results, 'N-BEATS', y_test, nbeats_pred, y_train=y_train)
+        print("✅ N-BEATS done")
 
-    print("\n[2/2] N-HiTS...")
-    nhits = NHiTSModel(
-        input_chunk_length=24,
-        output_chunk_length=24,
-        n_epochs=10,
-        random_state=42,
-        batch_size=64,
-        pl_trainer_kwargs={"enable_progress_bar": False}
-    )
-    nhits.fit(train_scaled_series, val_series=val_scaled_series, verbose=False)
-    nhits_pred = nhits.predict(n=len(test_series))
-    nhits_pred = scaler_adv.inverse_transform(nhits_pred).values().flatten()
-    add_metrics(advanced_results, 'N-HiTS', y_test, nhits_pred, y_train=y_train)
-    print("✅ N-HiTS done")
+        print("\n[2/2] N-HiTS...")
+        nhits = NHiTSModel(
+            input_chunk_length=24,
+            output_chunk_length=24,
+            n_epochs=10,
+            random_state=42,
+            batch_size=64,
+            pl_trainer_kwargs={"enable_progress_bar": False}
+        )
+        nhits.fit(train_scaled_series, val_series=val_scaled_series, verbose=False)
+        nhits_pred = nhits.predict(n=len(test_series))
+        nhits_pred = scaler_adv.inverse_transform(nhits_pred).values().flatten()
+        add_metrics(advanced_results, 'N-HiTS', y_test, nhits_pred, y_train=y_train)
+        print("✅ N-HiTS done")
 
-except Exception as e:
-    print(f"⚠️ Advanced models skipped: {e}")
+    except Exception as e:
+        print(f"⚠️ Advanced models skipped: {e}")
+else:
+    print("⏭️  Advanced models (N-BEATS/N-HiTS) übersprungen (RUN_ADVANCED_MODELS=False)")
+    print("   Für schnelleres Testing fokussieren wir auf Baselines, Statistical & ML Trees.")
 
 if advanced_results:
     advanced_df = compare_models(advanced_results, sort_by='test_rmse')
