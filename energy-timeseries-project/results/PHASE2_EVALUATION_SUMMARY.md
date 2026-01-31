@@ -39,26 +39,27 @@ Jede Zeitreihe durchlief **9 Phasen** mit insgesamt **~17 Modellen**.
 
 ### 2. 🌊 Wind Offshore
 
-**Status**: ⚠️ **PROBLEM ERKANNT**
-
-**Best Model**: Naive (FEHLER!)
+**Best Model**: GRU (Deep Learning) ✅
 
 | Metrik | Wert |
 |--------|------|
-| **R²** | 1.0000 ❌ |
-| **RMSE** | 0.00 ❌ |
+| **R²** | 0.9119 |
+| **RMSE** | 44.72 MW |
+| **MAE** | - |
 
-**Problem**: 
-- Alle Baseline-Modelle zeigen R²=1.0, RMSE=0.0
-- Alle ML-Modelle zeigen R²=0.0
-- **Verdacht**: Datenleck oder Skalierungsfehler im Preprocessing
+**⚠️ KRITISCHER FIX IMPLEMENTIERT**:
+- **Problem**: 9-monatige Stillstandsperiode (Apr 2023 - Jan 2024)
+  - 7.081 Nullwerte (38.7% der Daten)
+  - Verursachte Datenleck → R²=1.0/0.0 Fehler
+- **Lösung**: Nur Daten VOR Stillstand nutzen (11.231 → 11.063 Datenpunkte)
+- **Ergebnis**: Realistische Scores, Deep Learning übertrifft ML Trees
 
-**Modelle getestet**: 17 (Baselines, Statistical, ML Trees, Deep Learning, Advanced)
+**Top 3 Models**:
+1. GRU: R²=0.9119
+2. LSTM: R²=0.9096  
+3. Simple RNN: R²=0.9036
 
-**Nächste Schritte**: 
-1. Preprocessing überprüfen (Skalierung, Feature-Leak)
-2. Train/Val/Test Split validieren
-3. Pipeline debuggen
+**Modelle getestet**: 14 (Baselines, Statistical, ML Trees, Deep Learning)
 
 ---
 
@@ -113,17 +114,17 @@ Jede Zeitreihe durchlief **9 Phasen** mit insgesamt **~17 Modellen**.
 
 ---
 
-## 🏆 Gesamtvergleich (ohne Wind Offshore)
+## 🏆 Gesamtvergleich (ALLE 5 Zeitreihen)
 
-| Zeitreihe | Best Model | R² | RMSE | MAE | Features |
-|-----------|-----------|-----|------|-----|----------|
-| **Consumption** 🏭 | Random Forest | **0.9999** | 104.44 MW | 57.56 MW | 27 |
-| **Wind Onshore** 💨 | Random Forest | **0.9997** | 33.96 MW | 13.10 MW | 27 |
-| **Solar** ☀️ | Random Forest | **0.9994** | 122.97 MW | 39.09 MW | 27 |
-| **Price** 💰 | LightGBM | **0.9800** | 9.99 EUR/MWh | 1.73 EUR/MWh | 28 |
-| **Wind Offshore** 🌊 | ❌ FEHLER | ❌ 1.0000 | ❌ 0.00 | - | - |
+| Zeitreihe | Best Model | R² | RMSE | MAE | Status |
+|-----------|-----------|-----|------|-----|--------|
+| **Consumption** 🏭 | Random Forest | **0.9999** | 104.44 MW | 57.56 MW | ✅ |
+| **Wind Onshore** 💨 | Random Forest | **0.9997** | 33.96 MW | 13.10 MW | ✅ |
+| **Solar** ☀️ | Random Forest | **0.9994** | 122.97 MW | 39.09 MW | ✅ |
+| **Price** 💰 | LightGBM | **0.9800** | 9.99 €/MWh | 1.73 €/MWh | ✅ |
+| **Wind Offshore** 🌊 | GRU | **0.9119** | 44.72 MW | - | ✅ **GEFIXT** |
 
-**Durchschnitt (4 erfolgreiche)**: R² = **0.9973**
+**Durchschnitt (ALLE 5)**: R² = **0.9782** 🎉
 
 ---
 
@@ -131,32 +132,41 @@ Jede Zeitreihe durchlief **9 Phasen** mit insgesamt **~17 Modellen**.
 
 ### ✅ Was funktioniert hervorragend:
 
-1. **Random Forest dominiert** (3 von 4 Best Models)
-2. **Tree-basierte ML-Modelle** (RF, XGBoost, LightGBM) sind sehr robust
-3. **Feature Engineering** ist entscheidend:
+1. **Random Forest dominiert** bei strukturierten Zeitreihen (3 von 5 Best Models)
+2. **Deep Learning (GRU/LSTM) übertrifft** bei Wind Offshore (weniger strukturiert)
+3. **Tree-basierte ML-Modelle** (RF, XGBoost, LightGBM) sind sehr robust für strukturierte Daten
+4. **Feature Engineering** ist entscheidend:
    - `lag_1`, `diff_1` (kurzfristige Abhängigkeit)
    - `lag_24`, `diff_24` (Tagesmuster)
    - `rolling_std_3` (Volatilität)
    - `lag_168` (Wochenmuster, bei Consumption)
 
-4. **Konsistente Top-Features** über alle Zeitreihen:
+5. **Konsistente Top-Features** über alle Zeitreihen:
    - Diff-Features (Änderungsrate)
    - Lag-Features (Vergangenheitswerte)
    - Rolling Statistics (Volatilität)
 
-### ⚠️ Was nicht funktioniert:
+6. **Datenqualität** ist kritisch:
+   - Wind Offshore: 9-monatige Stillstandsperiode musste ausgeschlossen werden
+   - Signifikante Nullwerte können Datenlecks verursachen
 
-1. **LSTM** deutlich schlechter als ML-Modelle:
+### ⚠️ Was gelernt wurde:
+
+1. **LSTM nicht immer optimal**:
    - Solar: R² = 0.86 vs. RF 0.9994
    - Wind Onshore: R² = 0.90 vs. RF 0.9997
    - Price: R² = 0.57 vs. LightGBM 0.98
    - Consumption: R² = 0.45 vs. RF 0.9999
+   - **ABER**: Bei Wind Offshore (GRU R²=0.91) besser als ML Trees!
 
 2. **Baseline-Modelle** schlecht bis negativ:
    - Naive, Seasonal Naive, Mean: R² oft negativ
    - Nur bei strukturierten Daten (Consumption) funktioniert Seasonal Naive (R²=0.39)
 
-3. **Wind Offshore Pipeline** komplett fehlerhaft
+3. **Datenqualität-Probleme** kritisch:
+   - Wind Offshore: 9-monatige Stillstandsperiode (7.081 Nullwerte = 38.7%)
+   - Verursachte massiven Datenleck (R²=1.0/0.0)
+   - Fix: Nur Daten VOR Stillstand nutzen → realistische Ergebnisse
 
 ---
 
@@ -177,12 +187,12 @@ Für jede Zeitreihe:
 
 ## 🔄 Nächste Schritte
 
-### Priorität 1: Wind Offshore Debug
-- [ ] Preprocessing-Code überprüfen
-- [ ] Skalierung validieren
-- [ ] Feature-Leak identifizieren
-- [ ] Pipeline-Fix implementieren
-- [ ] Erneut ausführen
+### ✅ Priorität 1: Wind Offshore Debug
+- [x] Preprocessing-Code überprüft
+- [x] Stillstandsperiode identifiziert (9 Monate)
+- [x] Feature-Leak gefixed (nur Daten vor Stillstand)
+- [x] Pipeline-Fix implementiert
+- [x] Erneut ausgeführt → **R²=0.9119 ✅**
 
 ### Priorität 2: LSTM-Optimierung (Optional)
 - [ ] Hyperparameter-Tuning
@@ -212,13 +222,21 @@ Für jede Zeitreihe:
 2. **Nutze LightGBM** für:
    - Price (R² = 0.9800, schneller als RF)
 
-3. **Feature Set**:
+3. **Nutze Deep Learning (GRU)** für:
+   - Wind Offshore (R² = 0.9119, besser als ML Trees bei weniger strukturierten Daten)
+
+4. **Feature Set**:
    - Minimum: lag_1, diff_1, lag_24, diff_24
    - Empfohlen: + rolling_std_3, lag_168, momentum
 
-4. **Monitoring**:
+5. **Monitoring**:
    - Überwache MAPE < 5% für gute Performance
    - Re-train bei Drift (> 10% MAPE-Anstieg)
+
+6. **Datenqualität**:
+   - Prüfe auf längere Stillstandsperioden
+   - Exkludiere oder markiere als Feature
+   - Vermeide Datenlecks durch lag-Features während Nullperioden
 
 ---
 
@@ -227,12 +245,12 @@ Für jede Zeitreihe:
 | Pipeline | Dauer | Modelle |
 |----------|-------|---------|
 | Solar | ~2 Min | 7 |
-| Wind Offshore | ~8 Min | 17 |
+| Wind Offshore | ~8 Min | 14 (ohne Advanced) |
 | Wind Onshore | ~3 Min | 7 |
 | Price | ~2 Min | 7 |
 | Consumption | ~2 Min | 7 |
-| **Gesamt** | **~17 Min** | **45** |
+| **Gesamt** | **~17 Min** | **42** |
 
 ---
 
-**Fazit**: Systematische Evaluation zeigt klare Dominanz von Tree-basierten ML-Modellen (Random Forest, LightGBM). Deep Learning (LSTM) deutlich unterlegen bei diesen strukturierten Zeitreihen. Wind Offshore Pipeline benötigt dringend Debug.
+**Fazit**: Systematische Evaluation abgeschlossen! **Random Forest dominiert** strukturierte Zeitreihen (Solar, Wind Onshore, Consumption), **Deep Learning (GRU) übertrifft** bei weniger strukturierten Daten (Wind Offshore), **LightGBM optimal** für Price. Wind Offshore Fix zeigt Wichtigkeit von Datenqualitäts-Checks. Durchschnittlicher R²=0.9782 über alle 5 Zeitreihen.
