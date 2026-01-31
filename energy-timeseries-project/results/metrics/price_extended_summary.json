@@ -1,0 +1,24 @@
+{
+  "execution_timestamp": "2026-01-31T22:26:28.588026",
+  "phases_completed": 9,
+  "total_models": 6,
+  "data_points": 26257,
+  "features_created": 28,
+  "best_model": "LightGBM",
+  "best_category": "ML Tree",
+  "best_r2": 0.9798355312888426,
+  "best_rmse": 10.029614228615467,
+  "best_mae": 1.755792862000736,
+  "top_5_features": [
+    "diff_1",
+    "lag_1",
+    "momentum_3h",
+    "rolling_std_3",
+    "diff_24"
+  ],
+  "models_by_category": {
+    "Baseline": 3,
+    "ML_Tree": 3,
+    "Deep_Learning": 0
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "execution_timestamp": "2026-01-31T22:19:01.566302",
+  "data_points": 26257,
+  "train_size": 21697,
+  "val_size": 2232,
+  "test_size": 2208,
+  "features_created": 28,
+  "price_mean": 136.45041931675362,
+  "price_std": 115.92904184671758,
+  "price_cv": 0.8496056107940712,
+  "negatives_count": 827,
+  "negatives_pct": 3.1496362874661994,
+  "best_model": "LightGBM",
+  "best_r2": 0.9798355312888426,
+  "best_rmse": 10.029614228615467,
+  "best_mae": 1.755792862000736,
+  "top_5_features": [
+    "diff_1",
+    "lag_1",
+    "momentum_3h",
+    "rolling_std_3",
+    "diff_24"
+  ]
+}
