@@ -1,0 +1,7 @@
+{
+  "model": "LightGBM Quantile",
+  "p50_r2": 0.9994369291627103,
+  "p50_rmse": 44.5066068961046,
+  "p10_p90_coverage": 68.29710144927536,
+  "expected_coverage": 80.0
+}
