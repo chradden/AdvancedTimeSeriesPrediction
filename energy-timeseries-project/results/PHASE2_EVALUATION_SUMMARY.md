@@ -35,6 +35,27 @@ Jede Zeitreihe durchlief **9 Phasen** mit insgesamt **~17 Modellen**.
 
 **Modelle getestet**: 7 (Naive, Seasonal Naive, Mean, Random Forest, XGBoost, LightGBM, LSTM)
 
+#### 🚀 Advanced Deep Learning Models (Google Colab GPU)
+
+Zusätzliche Tests mit moderneren Architekturen auf Google Colab T4 GPU:
+
+| Modell | R² | RMSE (MW) | MAE (MW) | Training Zeit |
+|--------|-----|-----------|----------|---------------|
+| **Bi-LSTM** ✅ | **0.9955** | - | - | ~30s |
+| **Baseline LSTM** | **0.9934** | - | - | ~25s |
+| **Autoencoder** | **0.9515** | - | - | ~40s |
+| **VAE** | **0.9255** | - | - | ~60s |
+| **N-BEATS** ⚠️ | -18.93 | 23,316 | 16,348 | ~977s |
+| **N-HiTS** ⚠️ | -4.22 | 11,930 | 8,211 | ~138s |
+
+**Erkenntnisse**:
+- ✅ **Bi-LSTM** erreicht mit **R²=0.9955** die beste Performance unter den DL-Modellen
+- ✅ **Standard LSTM** ebenfalls stark mit **R²=0.9934**
+- ✅ **GPU-Beschleunigung**: 30-50x schneller als CPU für LSTM/Bi-LSTM
+- ⚠️ **N-BEATS/N-HiTS** zeigen negative R² - möglicherweise nicht optimal für diese Zeitreihe konfiguriert oder Probleme mit Daten-Skalierung
+- ✅ **Generative Modelle** (VAE, Autoencoder) liefern solide Ergebnisse für Unsicherheitsschätzung
+- 💡 **Random Forest (R²=0.9994)** bleibt dennoch das beste Gesamtmodell für Solar
+
 ---
 
 ### 2. 🌊 Wind Offshore
