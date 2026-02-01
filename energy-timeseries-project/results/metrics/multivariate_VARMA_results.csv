@@ -1,0 +1,5 @@
+Series,R²,RMSE,MAE
+solar,0.1847,1445.67,1053.28
+wind_offshore,-0.0892,12.13,6.89
+price,0.0234,22.89,16.12
+consumption,0.1523,2320.45,1678.34

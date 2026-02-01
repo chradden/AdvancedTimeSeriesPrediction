@@ -1,0 +1,13 @@
+X (cause),Y (effect),Min p-value,Granger Causality
+price,solar,0.0,Yes
+consumption,solar,0.0,Yes
+solar,consumption,0.0,Yes
+solar,price,9.77333754293e-312,Yes
+price,consumption,5.9724414239443e-211,Yes
+consumption,price,2.9738370399375314e-132,Yes
+solar,wind_offshore,6.167416862978442e-67,Yes
+consumption,wind_offshore,6.584190920890083e-23,Yes
+wind_offshore,consumption,4.592630869735778e-22,Yes
+wind_offshore,price,3.3200603442229477e-19,Yes
+wind_offshore,solar,1.0823832039240616e-15,Yes
+price,wind_offshore,1.3319564375870046e-15,Yes
