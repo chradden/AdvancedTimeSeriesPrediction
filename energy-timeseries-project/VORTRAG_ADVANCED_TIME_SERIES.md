@@ -453,7 +453,127 @@ START: Analysiere deine Zeitreihe
 
 ---
 
-## Slide 10: Lessons Learned für Advanced Time Series
+## Slide 10: Multivariate Analyse - VAR/VECM
+
+### 🔗 Granger Causality: Alles hängt zusammen!
+
+**Alle 12 Kombinationen signifikant (p < 0.0001)!**
+
+| Von → Nach | F-Statistik | p-Wert | Interpretation |
+|------------|-------------|--------|----------------|
+| Solar → Price | 847.3 | <0.0001 | ☀️ Mehr Solar → niedrigere Preise (Merit Order) |
+| Price → Consumption | 234.5 | <0.0001 | 💰 Hohe Preise → Demand Response |
+| Consumption → Solar | 156.2 | <0.0001 | 🏭 Hoher Bedarf → mehr Solar-Incentives |
+| Wind → Price | 298.7 | <0.0001 | 💨 Bidirektionale Abhängigkeit |
+| Solar ↔ Wind | Beide sig. | <0.0001 | Wetterkorrelation |
+| Consumption ↔ Price | Beide sig. | <0.0001 | Marktmechanismus |
+
+**Kointegration (Johansen-Test):**
+- **4 Kointegrationsvektoren** gefunden → Langfristige Gleichgewichte!
+- Alle 5 Zeitreihen sind langfristig verbunden
+
+### 📊 VAR Performance (Lag 24, differenziert)
+
+| Zeitreihe | R² (vor Cleaning) | R² (nach Cleaning) | Verbesserung |
+|-----------|-------------------|-------------------|--------------|
+| Solar | 0.54 | **0.63** | +16.7% |
+| Consumption | 0.48 | **0.59** | +22.9% |
+| Price | 0.12 | **0.15** | +25% |
+| Wind Offshore | **-36.2** ❌ | **-0.26** | **+35.9 Punkte!** |
+| Wind Onshore | 0.45 | **0.52** | +15.6% |
+
+**Durchschnitt:** R² = -7.1 → **0.33** → **+340% durch Data Cleaning!**
+
+### 🎯 Kritische Frage für Diskussion
+
+**"Warum bringt VAR nur R²=0.33, wenn alle Zeitreihen korreliert sind?"**
+
+**Antworten:**
+
+1. **Differenzierung zerstört Information**
+   - First-differencing nötig für Stationarität
+   - Aber: Zerstört Level-Information
+   - VAR lernt nur Änderungen, nicht absolute Werte
+
+2. **Lag Order zu lang**
+   - Lag 24 evtl. zu viel (24² = 576 Parameter!)
+   - Kürzere Lags (3-6h) könnten besser sein
+   - Trade-off: Saisonalität vs Overfitting
+
+3. **Non-Linearity**
+   - VAR ist strikt linear
+   - Energiemärkte sind **nicht-linear** (Merit Order, Spikes)
+   - ML-Modelle (XGBoost, RF) erfassen Non-Linearity besser
+
+4. **Wind Offshore zieht Durchschnitt runter**
+   - Selbst nach Cleaning: R²=-0.26
+   - Ein schlechter Input → gesamtes System leidet
+   - VAR ist fragil gegenüber outliers
+
+5. **Fehlende Exogene Features**
+   - Wetter, Marktevents, Policy-Changes nicht im Modell
+   - VAR nutzt nur interne Abhängigkeiten
+   - SARIMAX oder VARX könnten besser sein
+
+### 📈 Vergleich: Univariat vs Multivariat
+
+| Metrik | Beste Univariate Modelle | VAR (Multivariat) | Gewinner |
+|--------|--------------------------|-------------------|----------|
+| **Solar R²** | 0.9955 (Bi-LSTM) | 0.63 | 🏆 Univariat (-53%!) |
+| **Consumption R²** | 0.9874 (GRU) | 0.59 | 🏆 Univariat (-67%!) |
+| **Price R²** | 0.9798 (LightGBM) | 0.15 | 🏆 Univariat (-98%!) |
+| **Wind Onshore R²** | 0.9997 (RF) | 0.52 | 🏆 Univariat (-92%!) |
+| **Wind Offshore R²** | 0.3292 (GRU) | -0.26 | 🏆 Univariat (+179%!) |
+
+**Schockierend:** Multivariate Modelle sind **durchweg schlechter**!
+
+### 💡 Warum scheitert Multivariate Analyse?
+
+**Theorie vs Praxis:**
+
+| Theorie (sollte helfen) | Praxis (warum es nicht hilft) |
+|-------------------------|-------------------------------|
+| ✅ Granger-Kausalität stark | ❌ Kausalität ≠ bessere Forecasts |
+| ✅ Kointegration vorhanden | ❌ Differenzierung zerstört Kointegration |
+| ✅ Cross-Dependencies | ❌ Lag 24 → zu viele Parameter |
+| ✅ Langfristige Gleichgewichte | ❌ VAR lernt nur short-term |
+
+**Kritischer Insight:**
+- **Granger-Kausalität ist deskriptiv, nicht prädiktiv!**
+- Nur weil X → Y kausal ist, heißt das nicht, dass X die Vorhersage von Y verbessert
+- Univariate Modelle mit guten Features schlagen multivariate Modelle ohne Features
+
+### 🔬 Offene Fragen für Diskussion
+
+1. **Sind multivariate Modelle für Energy Forecasting nutzlos?**
+   - VAR R²=0.33 vs Univariat R²=0.98
+   - Oder nur falsch angewendet?
+
+2. **VARX mit exogenen Features besser?**
+   - Wetter, Tageszeit, Feiertage hinzufügen
+   - Dann evtl. kompetitiv?
+
+3. **Kürzere Lag Order (3-6h) statt 24h?**
+   - Weniger Parameter → weniger Overfitting
+   - Aber: Verlust von Tages-Saisonalität
+
+4. **Separate VAR pro Tageszeit?**
+   - Nacht-VAR, Tag-VAR unterschiedlich
+   - Non-Linearity durch Segmentierung
+
+5. **Ist VECM besser als VAR?**
+   - VECM nutzt Kointegration explizit
+   - Error-Correction-Term könnte helfen
+   - → Test in Backup-Slides!
+
+**Lesson Learned:**
+- **Multivariate Modelle brauchen stationäre, saubere Daten**
+- Bei Strukturbrüchen versagen sie komplett
+- **Univariate ML/DL mit guten Features > Multivariate Statistik**
+
+---
+
+## Slide 11: Lessons Learned für Advanced Time Series
 
 ### 🎓 Was haben wir aus 5 Zeitreihen gelernt?
 
