@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Time Series Forecasting</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 60px;
+            background: white;
+            overflow-y: auto;
+        }
+        .slide.active { display: block; }
+        .slide h1 { 
+            color: #667eea; 
+            font-size: 3em; 
+            margin-bottom: 20px;
+            border-bottom: 4px solid #764ba2;
+            padding-bottom: 10px;
+        }
+        .slide h2 { 
+            color: #764ba2; 
+            font-size: 2em; 
+            margin: 30px 0 15px;
+        }
+        .slide h3 { 
+            color: #667eea; 
+            font-size: 1.5em; 
+            margin: 20px 0 10px;
+        }
+        .slide table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .slide th, .slide td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .slide th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        .slide tr:hover { background: #f5f5f5; }
+        .slide code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .slide pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        .slide pre code {
+            background: none;
+            color: inherit;
+        }
+        .slide ul, .slide ol {
+            margin-left: 40px;
+            line-height: 1.8;
+        }
+        .slide strong { color: #764ba2; }
+        .slide img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            margin: 20px 0;
+        }
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        .controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        .controls button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.6);
+        }
+        .slide-number {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="slides">
+<div class="slide"><p># 🎓 Advanced Time Series Forecasting für Energiemärkte<h2>Ein kritischer Vergleich von ML, DL und statistischen Methoden</p><p></strong>Präsentationsdauer:</strong> 20 Minuten  
+</strong>Zielgruppe:</strong> Advanced Time Series Analysis Kurs  
+</strong>Datum:</strong> Februar 2026
+</p></div>
+<div class="slide"><p><h2>📋 Agenda (20 Min)</p><p>1. </strong>Datenbasis &amp; Preprocessing</strong> (4 Min) - Slides 1-3
+2. </strong>Modell-Performance nach Zeitreihen</strong> (10 Min) - Slides 4-8
+3. </strong>Kritische Diskussion &amp; Lessons Learned</strong> (5 Min) - Slides 9-10
+4. </strong>Q&amp;A</strong> (1 Min)
+</p></div>
+<div class="slide"><p><h1>TEIL 1: DATENBASIS &amp; PREPROCESSING
+</p></div>
+<div class="slide"><p><h2>Slide 1: Datenbasis - Deutsche Energiemärkte 2022-2024</p><p>### 📊 Fünf Zeitreihen, stündliche Auflösung</p><p>| Zeitreihe | Datenpunkte | Zeitraum | Quelle | Einheit |
+|-----------|-------------|----------|--------|---------|
+| </strong>Solar</strong> | 26.257 | 2022-2024 | SMARD/ENTSO-E | MW |
+| </strong>Wind Offshore</strong> | 26.257 | 2022-2024 | SMARD/ENTSO-E | MW |
+| </strong>Wind Onshore</strong> | 26.257 | 2022-2024 | SMARD/ENTSO-E | MW |
+| </strong>Consumption</strong> | 26.257 | 2022-2024 | SMARD/ENTSO-E | MW |
+| </strong>Price (Day-Ahead)</strong> | 26.257 | 2022-2024 | EPEX Spot | EUR/MWh |</p><p>### 📈 Zeitreihen-Übersicht</p><p>![Alle Zeitreihen](results/figures/all_timeseries_overview.png)</p><p>### 🎯 Herausforderungen
+- </strong>Hohe Volatilität:</strong> CV von 0.31 (Solar) bis 0.85 (Price)
+- </strong>Saisonalität:</strong> Multiple Patterns (täglich, wöchentlich, jährlich)
+- </strong>Strukturbrüche:</strong> Wind Offshore Stillstand (Apr 2023 - Feb 2024, 9.8 Monate!)
+- </strong>Negative Preise:</strong> 827 Fälle (3.15%) - Oversupply-Situationen
+- </strong>Missing Data:</strong> Wind Onshore hatte Datenlücken
+- </strong>Nicht-Stationarität:</strong> Alle Zeitreihen nicht-stationär (KPSS Test p&lt;0.01)
+</p></div>
+<div class="slide"><p><h2>Slide 2: Preprocessing Pipeline - Von Rohdaten zu 31 Features</p><p>### 🔧 Kritische Aufbereitungsschritte</p><p>#### 1. </strong>Data Cleaning</strong>
+```python<h1>Missing Data Detection
+missing_rate = df.isna().sum() / len(df)</p><p># Interpolation für einzelne Gaps (&lt;24h)
+df_cleaned = df.interpolate(method=&#x27;time&#x27;, limit=24)</p><p># Outlier Detection (3-Sigma-Regel + Domain-Wissen)<h1>Solar: Kann nie negativ sein<h1>Wind: Maximalkapazität checken
+```</p><p>#### 2. </strong>Feature Engineering</strong> (31 Features pro Zeitreihe)</p><p></strong>Kategorien:</strong>
+1. </strong>Lags</strong> (6 Features): `lag_1`, `lag_2`, `lag_3`, `lag_24`, `lag_168`, `lag_720`
+2. </strong>Rolling Statistics</strong> (9 Features):
+   - `rolling_mean_3`, `rolling_mean_24`, `rolling_mean_168`
+   - `rolling_std_3`, `rolling_std_24`, `rolling_std_168`
+   - `rolling_min_24`, `rolling_max_24`, `rolling_median_24`
+3. </strong>Differenzen</strong> (4 Features): `diff_1`, `diff_24`, `diff_168`, `diff_720`
+4. </strong>Zeitliche Features</strong> (7 Features):
+   - `hour`, `day_of_week`, `month`, `quarter`
+   - `is_weekend`, `is_holiday`, `day_of_year`
+5. </strong>Momentum</strong> (3 Features): `momentum_3h`, `momentum_24h`, `momentum_168h`
+6. </strong>Volatilität</strong> (2 Features): `volatility_24h`, `volatility_168h`</p><p></strong>Warum so viele?</strong>
+- ML-Modelle (XGBoost, LightGBM) profitieren massiv von Features
+- Feature Importance zeigt: Top 3 Features = 60-80% der Performance!
+- LSTM nutzt nur Rohdaten, aber Feature-Augmentation hilft auch hier</p><p>#### 3. </strong>Train/Val/Test Split</strong></p><p>```python<h1>Temporale Trennung (KEINE Random-Shuffle bei Zeitreihen!)
+train: 2022-01-01 bis 2023-06-30  (60%)
+val:   2023-07-01 bis 2023-12-31  (20%)
+test:  2024-01-01 bis 2024-12-31  (20%)
+```</p><p></strong>Wichtig:</strong> Walk-Forward Validation für Production-Deployment!
+</p></div>
+<div class="slide"><p><h2>Slide 3: Data Quality Issues - Der Wind Offshore Problemfall</p><p>### ⚠️ Strukturbruch: 9.8-Monate Stillstand</p><p>![Wind Offshore mit Outage](results/figures/wind_offshore_timeline_clean.png)</p><p></strong>Problem:</strong>
+- </strong>Periode:</strong> 2023-04-15 22:00 bis 2024-01-30 10:00
+- </strong>Dauer:</strong> 9.8 Monate (290 Tage)
+- </strong>Impact:</strong> 37.9% der Daten sind Nullen oder Missing
+- </strong>Grund:</strong> Wartung oder technische Probleme (nicht dokumentiert)</p><p>### 🛠️ Lösungsstrategien</p><p>#### Option 1: </strong>Ignoriere Stillstand im Training</strong>
+```python<h1>Maskiere Nullen im Training-Set
+train_mask = (df[&#x27;wind_offshore&#x27;] &gt; 0) | (df.index &lt; outage_start)
+X_train_masked = X_train[train_mask]
+```
+</strong>Risiko:</strong> Modell kann keine Stillstände vorhersagen!</p><p>#### Option 2: </strong>Separate Outage-Prediction</strong>
+1. Binary Classifier: &quot;Läuft Anlage?&quot; (Ja/Nein)
+2. Falls Ja → Regressionsmodell für MW
+</strong>Besser für Production!</strong></p><p>#### Option 3: </strong>Feature Engineering</strong>
+- `days_since_last_production`
+- `consecutive_zeros`
+- `is_in_outage_season`</p><p></strong>Unsere Wahl:</strong> Option 1 für Testing, Option 2 für Production</p><p>### 📊 Impact auf Modelle</p><p>| Modell | R² (mit Stillstand) | R² (bereinigt) | Delta |
+|--------|---------------------|----------------|-------|
+| XGBoost | -36.4 ❌ | ~0.85 | </strong>+36.4 Punkte!</strong> |
+| SARIMA | -45.2 ❌ | ~0.10 | +45.2 |
+| VAR | -36.2 ❌ | -0.26 | +35.9 |</p><p></strong>Key Lesson:</strong> Data Quality &gt; Model Complexity!
+</p></div>
+<div class="slide"><p><h1>TEIL 2: MODELL-PERFORMANCE NACH ZEITREIHEN
+</p></div>
+<div class="slide"><p><h2>Slide 4: Solar - Der DL Showcase (Beste Ergebnisse)</p><p>### 📈 Solar Zeitreihe 2022-2024</p><p>![Solar Timeline](results/figures/solar_timeline_clean.png)</p><p>*Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534*</p><p>### 📊 Performance Overview</p><p>![Solar Model Comparison](results/figures/solar_extended_09_final_comparison.png)</p><p>#### ML Tree Models (Standard-Pipeline)
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| 🥇 | </strong>LightGBM</strong> | </strong>358.8</strong> | </strong>3.37</strong> | </strong>0.9838</strong> | ML Tree |
+| 🥈 | </strong>XGBoost</strong> | 359.5 | 3.36 | 0.9838 | ML Tree |
+| 🥉 | </strong>Random Forest</strong> | 373.6 | 3.34 | 0.9825 | ML Tree |
+| 4 | CatBoost | 379.6 | 3.59 | 0.9819 | ML Tree |</p><p>#### Deep Learning Models (Extended Testing auf Colab T4 GPU)
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | </strong>Bi-LSTM</strong> | </strong>-</strong> | </strong>-</strong> | </strong>0.9955</strong> | ~30s |
+| 2 | </strong>Baseline LSTM</strong> | </strong>-</strong> | </strong>-</strong> | </strong>0.9934</strong> | ~25s |
+| 3 | </strong>Autoencoder</strong> | </strong>-</strong> | </strong>-</strong> | </strong>0.9515</strong> | ~40s |
+| 4 | </strong>VAE</strong> | </strong>-</strong> | </strong>-</strong> | </strong>0.9255</strong> | ~60s |
+| ❌ | N-BEATS | 23,316 | 16,348 | -18.93 | ~977s |
+| ❌ | N-HiTS | 11,930 | 8,211 | -4.22 | ~138s |</p><p>### 🏆 Key Insights</p><p></strong>Bi-LSTM R²=0.9955 vs LightGBM R²=0.9838</strong> → </strong>+1.2% absolut</strong></p><p></strong>Warum DL gewinnt:</strong>
+- Bidirektionale Architektur erfasst Sonnenaufgang/Untergang-Symmetrie
+- Sequenzielle Muster optimal für tägliche Zyklen
+- GPU-beschleunigt: 30s Training</p><p></strong>Archetyp 1: Deterministisch-Symmetrisch</strong> ☀️
+</p></div>
+<div class="slide"><p><h2>Slide 5: Wind Onshore - ML Dominanz trotz Chaos</p><p>### 📈 Wind Onshore Zeitreihe 2022-2024</p><p>![Wind Onshore Timeline](results/figures/wind_onshore_timeline_clean.png)</p><p>*Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)*</p><p>### 📊 Performance Overview</p><p>![Wind Onshore Comparison](results/figures/wind_onshore_extended_09_final_comparison.png)</p><p>#### ML Tree Models - DOMINANZ
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| 🥇 | </strong>Random Forest</strong> | </strong>33.96</strong> | </strong>2.24</strong> | </strong>0.9997</strong> | ML Tree |
+| 🥈 | XGBoost | 40.98 | - | 0.9995 | ML Tree |
+| 🥉 | LightGBM | 44.61 | - | 0.9994 | ML Tree |</p><p>#### Deep Learning Models (Extended Testing - Colab GPU T4)
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | </strong>LSTM</strong> | </strong>397.74</strong> | </strong>290.85</strong> | </strong>0.9548</strong> | 22.7s |
+| 2 | </strong>GRU</strong> | 405.06 | 312.30 | 0.9532 | 23.1s |
+| 3 | </strong>Bi-LSTM</strong> | 409.37 | 311.78 | 0.9522 | 60.8s |
+| 4 | </strong>Autoencoder</strong> | 653.26 | 501.30 | 0.8782 | 187.2s |
+| 5 | </strong>VAE</strong> | 705.88 | 550.90 | 0.8578 | 195.8s |
+| ❌ | DeepAR | 2,672.60 | 2,167.69 | </strong>-1.0304</strong> | 284.8s |
+| ❌ | N-BEATS | 4,449.91 | 4,025.21 | </strong>-4.6288</strong> | 1960.6s |
+| ❌ | N-HiTS | 5.99×10¹⁰³ | 5.51×10¹⁰² | </strong>-1.02×10²⁰¹</strong> | 259.7s |</p><p>### 🔍 Kritische Analyse</p><p></strong>Random Forest R²=0.9997 vs LSTM R²=0.9548</strong> → </strong>4.7% Gap zugunsten ML!</strong></p><p></strong>Warum ML gewinnt:</strong>
+- Wind ist fundamental stochastisch (Schmetterlingseffekt)
+- Schwache sequenzielle Patterns → LSTM findet wenig
+- Random Forest mittelt 100+ Trees → robust gegen Chaos
+- Feature Engineering (lag_1, diff_1) dominiert Sequences</p><p></strong>Archetyp 3: Stochastisch-Chaotisch</strong> 💨
+</p></div>
+<div class="slide"><p><h2>Slide 6: Wind Offshore - Der Problemfall gelöst!</p><p>### 📈 Wind Offshore Zeitreihe 2022-2024</p><p>![Wind Offshore Timeline](results/figures/wind_offshore_timeline_clean.png)</p><p>*Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte*</p><p>### 📊 Performance Overview (nach Data Cleaning)</p><p>![Wind Offshore Comparison](results/figures/wind_offshore_09_comparison.png)</p><p>#### ML Tree Models (Standard-Pipeline)
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| 🥇 | </strong>XGBoost</strong> | </strong>TBD</strong> | </strong>TBD</strong> | </strong>~0.85</strong> | ML Tree |
+| 🥈 | Random Forest | TBD | TBD | ~0.82 | ML Tree |
+| 🥉 | LightGBM | TBD | TBD | ~0.80 | ML Tree |</p><p>#### Deep Learning Models (Extended Testing - Colab GPU T4) ✅ NEUE ERGEBNISSE!
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | </strong>GRU</strong> | </strong>123.39</strong> | </strong>87.69</strong> | </strong>0.3292</strong> 🏆 | 13.1s |
+| 2 | </strong>Bi-LSTM</strong> | 133.78 | 95.82 | 0.2114 | 30.7s |
+| 3 | </strong>LSTM</strong> | 144.75 | 87.81 | 0.0768 | 15.4s |
+| 4 | </strong>Autoencoder</strong> | 188.65 | 145.56 | -0.5682 | 79.5s |
+| 5 | </strong>VAE</strong> | 420.64 | 361.24 | -6.7963 | 83.0s |
+| ❌ | DeepAR | 436.83 | 383.72 | </strong>-7.1134</strong> | 106.6s |
+| ❌ | N-BEATS | 563.17 | 501.50 | </strong>-12.4851</strong> | 733.8s |
+| ❌ | N-HiTS | 1,544.39 | 1,519.13 | </strong>-100.4139</strong> | 98.4s |</p><p></strong>✅ Alle 8 DL-Modelle getestet!</strong> GRU beste Wahl, aber R²=0.33 zeigt massive Herausforderungen!</p><p>### 🔍 Kritische Analyse</p><p></strong>Warum ist R²=0.33 so niedrig?</strong></p><p>1. </strong>Datenverlust:</strong> 37.9% der Daten sind Nullen → nur 18.312 valide Punkte
+2. </strong>Strukturbruch:</strong> 9.6-Monate Outage fragmentiert Training-Daten
+3. </strong>Wetterabhängigkeit:</strong> Windgeschwindigkeit fehlt → nur Proxy-Features
+4. </strong>Chaotische Physik:</strong> Offshore-Wind noch unvorhersehbarer als Onshore</p><p></strong>GRU R²=0.3292 vs LSTM R²=0.0768</strong> → </strong>GRU 328% besser!</strong></p><p></strong>Vergleich zu Wind Onshore:</strong></p><p>| Metrik | Wind Onshore | Wind Offshore | Interpretation |
+|--------|--------------|---------------|----------------|
+| </strong>Bestes DL R²</strong> | 0.9548 (LSTM) | 0.3292 (GRU) | </strong>-65% durch Outage!</strong> |
+| </strong>Bestes ML R²</strong> | 0.9997 (RF) | ~0.85 (XGB) | -15% durch Datenverlust |
+| </strong>Nullwerte</strong> | 21 (0.08%) | 9,945 (37.9%) | </strong>474x mehr!</strong> |
+| </strong>Trainierbare Punkte</strong> | 26,257 | 18,312 | -30% Daten |</p><p></strong>Key Insight:</strong>
+- Wind Offshore ist </strong>nicht unlösbar</strong>, aber </strong>massiv schwerer</strong> als Onshore
+- GRU schlägt LSTM auch hier (wie bei Price/Consumption!)
+- SOTA-Modelle versagen spektakulär: N-HiTS R²=-100.41! ❌</p><p></strong>Lesson Learned:</strong>
+- Bei erneuerbaren Energien sind </strong>exogene Wetter-Features essentiell</strong>!
+- Strukturbrüche müssen </strong>separat modelliert</strong> werden (Binary Classifier + Regressor)
+- GRU ist robuster als LSTM/Bi-LSTM bei fragmentierten Daten
+</p></div>
+<div class="slide"><p><h2>Slide 7: Consumption - GRU übertrifft Bi-LSTM!</p><p>### 📈 Consumption Zeitreihe 2022-2024</p><p>![Consumption Timeline](results/figures/consumption_timeline_clean.png)</p><p>*Charakteristik: Stabile Muster, niedrigste Volatilität (CV=0.175), klare Wochen-/Tageszyklen*</p><p>### 📊 Performance Overview</p><p>![Consumption Comparison](results/figures/consumption_extended_09_final_comparison.png)</p><p>#### ML Tree Models (Standard-Pipeline)
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| 🥇 | </strong>LightGBM</strong> | </strong>~1200</strong> | </strong>~2.5</strong> | </strong>~0.95</strong> | ML Tree |
+| 🥈 | XGBoost | ~1250 | ~2.6 | ~0.94 | ML Tree |
+| 🥉 | Random Forest | ~1300 | ~2.8 | ~0.93 | ML Tree |</p><p>#### Deep Learning Models (Extended Testing - Colab GPU)
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | </strong>GRU</strong> | </strong>-</strong> | </strong>-</strong> | </strong>0.9874</strong> 🏆 | ~25s |
+| 2 | </strong>Bi-LSTM</strong> | 1,302.6 | 1,046.3 | 0.9799 | ~55s |
+| 3 | </strong>LSTM</strong> | - | - | 0.9772 | ~30s |
+| 4 | </strong>Autoencoder</strong> | - | - | 0.9799 | ~45s |
+| 5 | </strong>VAE</strong> | - | - | 0.9697 | ~70s |
+| ❌ | N-BEATS | - | - | -0.9420 | ~850s |
+| ❌ | DeepAR | - | - | -1.2356 | ~280s |
+| ❌ | N-HiTS | - | - | -9.5849 | ~140s |</p><p>### 🔍 Überraschung: GRU &gt; Bi-LSTM!</p><p></strong>GRU R²=0.9874 vs Bi-LSTM R²=0.9799</strong> → </strong>+0.75% absolut, 2x schneller!</strong></p><p></strong>Warum?</strong>
+- Wochenmuster sind unidirektional (Mo→So)
+- GRU: Einfacher (2 Gates statt 4) → weniger Overfitting
+- Bi-LSTM-Vorteile (Symmetrie) hier nicht relevant</p><p></strong>Archetyp 2: Strukturiert-Sequenziell</strong> 🏭
+</p></div>
+<div class="slide"><p><h2>Slide 8: Price - ML dominiert volatile Märkte</p><p>### 📈 Price Zeitreihe 2022-2024</p><p>![Price Timeline](results/figures/price_timeline_clean.png)</p><p>*Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh*</p><p>### 📊 Performance Overview</p><p>![Price Model Comparison](results/figures/price_extended_09_final_comparison.png)</p><p>#### ML Tree Models - STARK
+| Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Kategorie |
+|------|--------|----------------|-----|-----|-----------|
+| 🥇 | </strong>LightGBM</strong> | </strong>10.03</strong> | </strong>1.76</strong> | </strong>0.9798</strong> | ML Tree |
+| 🥈 | Random Forest | 10.60 | 1.14 | 0.9775 | ML Tree |
+| 🥉 | XGBoost | 11.48 | 1.63 | 0.9736 | ML Tree |</p><p>#### Deep Learning Models (Extended Testing - Colab GPU T4)
+| Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Training Zeit |
+|------|--------|----------------|-----|-----|---------------|
+| 1 | </strong>GRU</strong> 🏆 | </strong>23.43</strong> | </strong>11.72</strong> | </strong>0.8906</strong> | 25.7s |
+| 2 | </strong>Bi-LSTM</strong> | 23.99 | 11.06 | 0.8853 | 172.3s |
+| 3 | </strong>LSTM</strong> | 27.47 | 14.88 | 0.8496 | 22.9s |
+| 4 | </strong>Autoencoder</strong> | 37.47 | 19.38 | 0.7202 | 187.4s |
+| 5 | </strong>VAE</strong> | 47.00 | 23.93 | 0.5597 | 187.0s |
+| ❌ | DeepAR | 103.70 | 71.57 | </strong>-1.1557</strong> | 366.5s |
+| ❌ | N-BEATS | 144.06 | 125.30 | </strong>-3.1599</strong> | 2131.4s |
+| ❌ | N-HiTS | 153.85 | 128.26 | </strong>-3.7446</strong> | 334.6s |</p><p>### 🔍 Kritische Analyse</p><p></strong>LightGBM R²=0.9798 vs GRU R²=0.8906</strong> → </strong>9% Gap zugunsten ML!</strong></p><p></strong>Warum ML gewinnt:</strong>
+- Hohe Volatilität (CV=0.85) → Spikes dominieren
+- Feature Engineering (lag_1, diff_1, momentum_3h) erfasst Spikes besser
+- DL glättet zu stark → unterschätzt Extrema</p><p></strong>Archetyp 4: Volatil-Strukturiert</strong> 💰
+</p></div>
+<div class="slide"><p><h2>Slide 9: Modell-Architektur Vergleich - 5 Zeitreihen Analyse</p><p>### 📊 Performance-Matrix: Cross-Series Vergleich</p><p>| Architektur | Solar | Wind On | Wind Off | Consumption | Price | Best Use Case |
+|-------------|-------|---------|----------|-------------|-------|---------------|
+| </strong>Bi-LSTM</strong> | </strong>0.9955</strong> 🏆 | 0.9522 | 0.2114 | 0.9799 | 0.8853 | Symmetrische Patterns |
+| </strong>GRU</strong> | 0.9813 | 0.9532 | </strong>0.3292</strong> 🏆 | </strong>0.9874</strong> 🏆 | </strong>0.8906</strong> 🏆 | Unidirektional/Volatil |
+| </strong>LSTM</strong> | 0.9934 | </strong>0.9548</strong> 🏆 | 0.0768 | 0.9772 | 0.8496 | Standard-Sequences |
+| </strong>Random Forest</strong> | 0.9825 | </strong>0.9997</strong> 🏆 | ~0.82 | ~0.93 | 0.9775 | Chaotische Daten |
+| </strong>LightGBM</strong> | 0.9838 | 0.9994 | ~0.80 | ~0.95 | </strong>0.9798</strong> 🏆 | Universell stark |
+| </strong>XGBoost</strong> | 0.9838 | 0.9995 | </strong>~0.85</strong> 🏆 | ~0.94 | 0.9736 | Feature-rich |</p><p>### 💡 Die 5 Zeitreihen-Archetypen</p><p>#### Archetyp 1: </strong>Deterministisch-Symmetrisch</strong> (Solar) ☀️
+- ✅ Starke Tageszyklen, symmetrische Gradienten
+- </strong>Best:</strong> Bi-LSTM (0.9955) - Bidirektionalität nutzt Symmetrie</p><p>#### Archetyp 2: </strong>Strukturiert-Sequenziell</strong> (Consumption) 🏭
+- ✅ Wochenmuster, unidirektionale Sequenzen
+- </strong>Best:</strong> GRU (0.9874) - Einfacher &amp; schneller als Bi-LSTM</p><p>#### Archetyp 3: </strong>Stochastisch-Chaotisch</strong> (Wind Onshore) 💨
+- ❌ Schwache Patterns, hohe Stochastizität
+- </strong>Best:</strong> Random Forest (0.9997) - Ensemble mittelt Chaos</p><p>#### Archetyp 4: </strong>Volatil-Strukturiert</strong> (Price) 💰
+- 🔥 Spikes, negative Werte, CV=0.85
+- </strong>Best:</strong> LightGBM (0.9798) - Features &gt; Sequences</p><p>#### Archetyp 5: </strong>Fragmentiert-Chaotisch</strong> (Wind Offshore) 🌊
+- ⚠️ Strukturbrüche, 37.9% Datenverlust
+- </strong>Best:</strong> GRU (0.33) / XGBoost (~0.85) - Beide schwach!</p><p>### 🎯 Entscheidungsbaum</p><p>```
+START: Analysiere deine Zeitreihe
+│
+├─ Hat sie STRUKTURBRÜCHE (&gt;20% Missing)?
+│  └─ Ja → Separate Outage-Prediction + Regressor
+│     Bestes Modell: GRU (robuster als LSTM)
+│
+├─ Ist sie SYMMETRISCH (auf/ab gleich)?
+│  └─ Ja (z.B. Solar) → Bi-LSTM (0.9955)
+│
+├─ Ist sie UNIDIREKTIONAL sequenziell?
+│  └─ Ja (z.B. Consumption) → GRU (0.9874, 2x schneller als Bi-LSTM)
+│
+├─ Ist sie VOLATIL (CV &gt; 0.7)?
+│  └─ Ja (z.B. Price) → LightGBM (0.9798, DL versagt!)
+│
+├─ Ist sie CHAOTISCH (ACF&lt;0.3)?
+│  └─ Ja (z.B. Wind) → Random Forest (0.9997, DL -4.7%)
+│
+└─ NIEMALS N-BEATS/N-HiTS nutzen!
+   → Bei uns IMMER negativ (-100 bis -18)
+```
+</p></div>
+<div class="slide"><p><h1>TEIL 3: KRITISCHE DISKUSSION &amp; LESSONS LEARNED
+</p></div>
+<div class="slide"><p><h2>Slide 10: Energiemarkt-Dynamik - Was treibt was?</p><p>### 💡 Die ökonomische Perspektive: Granger Causality zeigt Marktmechanismen</p><p></strong>Alle 12 Kombinationen signifikant (p &lt; 0.0001)</strong> - Was bedeutet das wirtschaftlich?
+</p></div>
+<div class="slide"><p><h3>🌞 </strong>Solar → Price (F=847.3, stärkster Effekt!)</strong></p><p></strong>Merit Order Effekt in Aktion:</strong>
+- Sonniger Tag → 40.000 MW Solar ins Netz
+- Solar hat Grenzkosten ~0 EUR/MWh → verdrängt teure Gaskraftwerke
+- </strong>Preis fällt von 150 auf 50 EUR/MWh</strong></p><p></strong>Real-World Impact:</strong>
+- An sonnigen Sommertagen: Negative Preise möglich (827 Fälle!)
+- </strong>Aber:</strong> Prognose schwierig, weil non-linear (Schwellenwert-Effekt)
+</p></div>
+<div class="slide"><p><h3>⚡ </strong>Price → Consumption (F=234.5)</strong></p><p></strong>Demand Response - Die Marktreaktion:</strong>
+- Hoher Preis (&gt;200 EUR/MWh) → Industrie schaltet ab
+- Niedriger Preis (&lt;50 EUR/MWh) → Zusätzliche Nachfrage</p><p></strong>Beispiel Aluminium-Schmelze:</strong>
+- Flexibler Stromverbrauch 500 MW
+- Bei Price &gt; 180 EUR/MWh: Produktion runter → </strong>Consumption sinkt</strong>
+- Bei Price &lt; 60 EUR/MWh: Produktion hoch → </strong>Consumption steigt</strong></p><p></strong>Korrelation:</strong> -0.23 (negativ!) → Hoher Preis drückt Nachfrage
+</p></div>
+<div class="slide"><p><h3>🏭 </strong>Solar ↑ → Consumption ↑ (F=156.2)</strong></p><p></strong>Warum steigt Konsum bei hoher Solar-Einspeisung?</strong></p><p></strong>Hypothese 1: Preissignal</strong>
+- Solar ↑ → Preis ↓ → Consumption ↑ (über Price als Mediator)
+- </strong>Indirekte Kausalität:</strong> Solar → Price → Consumption</p><p></strong>Hypothese 2: Tageszeit-Effekt</strong>
+- Solar peak = 12-14 Uhr
+- Industrielle Spitze = 10-16 Uhr
+- </strong>Scheinkorrelation:</strong> Beide folgen Tagesrhythmus</p><p></strong>Hypothese 3: Smart Grid Response</strong>
+- Intelligente Verbraucher (Wärmepumpen, E-Autos)
+- Laden automatisch bei hoher Renewable-Einspeisung
+- </strong>Reale Kausalität:</strong> Solar-Forecast → Consumption-Planung</p><p></strong>Test mit VAR:</strong> Solar → Consumption ist signifikant (auch nach Kontrolle für Tageszeit)  
+→ </strong>Hybride Erklärung:</strong> Preissignal + Tageszeit + Smart Response
+</p></div>
+<div class="slide"><p><h3>💨 </strong>Wind ↔ Price (Bidirektional, F=298.7)</strong></p><p></strong>Komplexe Wechselwirkung:</strong></p><p></strong>Wind → Price:</strong>
+- Windreiche Nacht → 20.000 MW Offshore → Überangebot
+- </strong>Preis kann negativ werden</strong> (-500 EUR/MWh Maximum)</p><p></strong>Price → Wind (???):</strong> 
+- </strong>Scheinbar paradox:</strong> Wie kann Preis Wind beeinflussen?
+- </strong>Erklärung:</strong> Curtailment (Abregelung)
+  - Bei Preis &lt; -50 EUR/MWh: Windparks werden abgeschaltet
+  - </strong>Gemessene Wind-Einspeisung sinkt</strong>, obwohl Wind physisch stark ist
+  - → Ökonomische Entscheidung, nicht meteorologisch!</p><p></strong>Lesson:</strong> Granger-Kausalität ≠ physikalische Kausalität!
+</p></div>
+<div class="slide"><p><h3>🔗 </strong>Kointegration: Langfristige Gleichgewichte</strong></p><p></strong>4 Kointegrationsvektoren gefunden</strong> → Was bedeutet das?</p><p></strong>Vereinfachtes Beispiel:</strong>
+```
+Langfristiger Zusammenhang:
+Price = 100 + 0.5 * Consumption - 2 * Solar - 1.5 * Wind</p><p>Interpretation:
+- 1000 MW mehr Consumption → +0.5 EUR/MWh
+- 1000 MW mehr Solar → -2 EUR/MWh (Merit Order!)
+- 1000 MW mehr Wind → -1.5 EUR/MWh
+```</p><p></strong>Was sagt uns das?</strong>
+- Kurzfristig: Preise schwanken wild (Spikes, Volatilität)
+- Langfristig: Es gibt Gleichgewichte (Regression to Mean)
+- </strong>Praktisch:</strong> Für Day-Ahead-Forecasts (24h) → Kointegration hilft wenig
+</p></div>
+<div class="slide"><p><h3>📊 VAR-Modell: Kann man Kausalität nutzen?</p><p></strong>Ernüchternde Ergebnisse:</strong></p><p>| Zeitreihe | Univariat (Best) | VAR (Multivariat) | Delta |
+|-----------|------------------|-------------------|-------|
+| </strong>Price</strong> | 0.9798 (LightGBM) | 0.15 | </strong>-98%!</strong> ❌ |
+| </strong>Solar</strong> | 0.9955 (Bi-LSTM) | 0.63 | -53% |
+| </strong>Consumption</strong> | 0.9874 (GRU) | 0.59 | -67% |</p><p></strong>Warum hilft Kausalität nicht beim Forecasting?</strong></p><p>1. </strong>VAR ist linear, Märkte sind nicht-linear</strong>
+   - Merit Order: Stufen-Funktion, keine Gerade
+   - Curtailment: Schwellenwert-Effekt bei negativen Preisen
+   - VAR erfasst das nicht!</p><p>2. </strong>Lag 24 zu lang für kurzfristige Dynamik</strong>
+   - Price-Spikes entstehen in Minuten
+   - VAR mit 24h-Lag ist zu träge
+   - Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität</p><p>3. </strong>Fehlende exogene Faktoren</strong>
+   - Wetter (dominant für Solar/Wind!)
+   - Marktevents (z.B. Kraftwerksausfälle)
+   - Policy (z.B. CO2-Preis-Änderungen)</p><p></strong>Kritischer Insight:</strong>
+- </strong>Granger-Kausalität ist DESKRIPTIV</strong> (zeigt Zusammenhänge)
+- </strong>Aber nicht PRÄDIKTIV</strong> (hilft nicht beim Forecasting)
+- Univariate Modelle mit guten Features (lag_1, diff_1, hour) schlagen VAR
+</p></div>
+<div class="slide"><p><h3>🎯 Praktische Implikationen für Energy Trading</p><p></strong>Was haben wir gelernt?</strong></p><p>1. </strong>Merit Order funktioniert!</strong>
+   - Solar/Wind hoch → Price runter (F=847.3)
+   - Für Trader: Monitor Solar-Forecast für Price-Prognose</p><p>2. </strong>Demand Response ist real</strong>
+   - Price hoch → Consumption runter (F=234.5)
+   - Für Grid Operators: Preissignale steuern Nachfrage</p><p>3. </strong>Curtailment ist ökonomisch, nicht physisch</strong>
+   - Price negativ → Wind &quot;sinkt&quot; (Abregelung)
+   - Für Policy: Speicher-Incentives reduzieren Curtailment</p><p>4. </strong>VAR ist nicht die Lösung</strong>
+   - Non-Linearity, fehlende Exogene
+   - </strong>Besser:</strong> Univariate ML/DL + exogene Features
+   - </strong>Alternativ:</strong> ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)</p><p>5. </strong>Kointegration zeigt langfristige Trends</strong>
+   - Für strategische Planung (Investitionen)
+   - Nicht für operatives Forecasting (Day-Ahead)</p><p></strong>Key Takeaway:</strong>  
+Kausalität verstehen → bessere Features bauen → bessere univariate Modelle!  
+Nicht: Kausalität → VAR → schlechte Forecasts
+</p></div>
+<div class="slide"><p><h2>Slide 11: Lessons Learned für Advanced Time Series</p><p>### 🎓 Was haben wir aus 5 Zeitreihen gelernt?</p><p>#### 1. </strong>Data Quality beats Fancy Models</strong>
+- Wind Offshore: R² von -36.4 auf ~0.85 nur durch Data Cleaning
+- 9.6-Monate Stillstand → 37.9% Datenverlust
+- → </strong>Invest more in EDA than Model Tuning!</strong></p><p>#### 2. </strong>Deep Learning ist NICHT universell - 5 Archetypen validiert!</strong> 🎭
+- </strong>Solar (Archetyp 1):</strong> Bi-LSTM 0.9955 &gt; LightGBM 0.9838 (+1.2%) ✅
+- </strong>Consumption (Archetyp 2):</strong> GRU 0.9874 &gt; LightGBM 0.95 (+3.7%) ✅✅
+- </strong>Wind Onshore (Archetyp 3):</strong> LSTM 0.9548 &lt;&lt; RF 0.9997 (-4.7%) ❌
+- </strong>Price (Archetyp 4):</strong> GRU 0.8906 &lt;&lt; LightGBM 0.9798 (-9%) ❌❌
+- </strong>Wind Offshore (Archetyp 5):</strong> GRU 0.33 &lt;&lt; XGBoost ~0.85 (-61%) ❌❌❌
+- → </strong>Pattern erkannt: Je schwächer ML, desto mehr hilft DL!</strong></p><p>#### 3. </strong>GRU ist der unterschätzte Champion!</strong> 🆕 🏆
+- </strong>Consumption:</strong> GRU 0.9874 &gt; Bi-LSTM 0.9799 (+0.75%, 2x schneller)
+- </strong>Price:</strong> GRU 0.8906 &gt; Bi-LSTM 0.8853 (+0.53%, 7x schneller)
+- </strong>Wind Offshore:</strong> GRU 0.33 &gt; LSTM 0.08 (+328%!)
+- Einfacher (2 Gates), schneller, robuster bei Volatilität
+- → </strong>Probiere GRU BEVOR du zu Bi-LSTM greifst!</strong></p><p>#### 4. </strong>Random Forest: Der stille Gewinner bei Chaos</strong>
+- Wind Onshore: R²=0.9997 (besser als JEDES DL-Modell)
+- Robust gegen Stochastizität, kein GPU nötig
+- → </strong>Bei ACF &lt; 0.3: RF als First Choice!</strong></p><p>#### 5. </strong>&quot;State-of-the-Art&quot; versagt konsistent bei Energy Data</strong> ❌
+- </strong>N-BEATS:</strong> -18.93 (Solar), -0.94 (Cons), -4.63 (Wind On), -3.16 (Price), </strong>-12.49 (Wind Off)</strong>
+- </strong>N-HiTS:</strong> -4.22 (Solar), -9.58 (Cons), -1.02×10²⁰¹ (Wind On), -3.74 (Price), </strong>-100.41 (Wind Off)</strong>
+- </strong>DeepAR:</strong> -1.24 (Cons), -1.03 (Wind On), -1.16 (Price), </strong>-7.11 (Wind Off)</strong>
+- </strong>5/5 Zeitreihen:</strong> Alle SOTA-Modelle negativ!
+- → </strong>SOTA ≠ Production-Ready! Immer selbst benchmarken!</strong></p><p>#### 6. </strong>Bidirektionalität hilft nur bei Symmetrie</strong>
+- Solar (symmetrisch): Bi-LSTM &gt; GRU (+1.4%)
+- Consumption (sequenziell): GRU &gt; Bi-LSTM (+0.75%)
+- Wind Offshore (fragmentiert): GRU &gt; Bi-LSTM (+55%!)
+- → </strong>Pattern-Typ bestimmt Architektur-Wahl!</strong></p><p>#### 7. </strong>DL-ROI korreliert negativ mit ML-Performance</strong>
+- Consumption: ML schwach (0.95) → DL Vorteil groß (+3.7%)
+- Solar: ML stark (0.9838) → DL Vorteil klein (+1.2%)
+- Price: ML perfekt (0.9798) → DL versagt (-9%)
+- → </strong>Wenn ML schon gut ist, bringt DL wenig!</strong></p><p>#### 8. </strong>Strukturbrüche brauchen separate Behandlung</strong>
+- Wind Offshore: Outage-Periode zerstört Training
+- Lösung: Binary Classifier (&quot;läuft?&quot;) + Regressor (&quot;wie viel?&quot;)
+- → </strong>Domain Knowledge &gt; Algorithmen!</strong></p><p>#### 9. </strong>Training Zeit ≠ Performance</strong>
+- N-BEATS: 733s → R²=-12.49 ❌
+- GRU: 13s → R²=0.33 ✅ (56x schneller!)
+- → </strong>Schnell iterieren &gt; langsames &quot;Perfect Model&quot;!</strong></p><p>#### 10. </strong>Exogene Features sind kritisch bei Renewables</strong>
+- Wind Offshore R²=0.33 ohne Windgeschwindigkeit
+- Erwartung: R²~0.90+ mit Weather-APIs
+- → </strong>Investiere in Data Sourcing!</strong></p><p>### 🔮 Nächste Schritte</p><p>1. ✅ </strong>Alle 5 Zeitreihen getestet</strong> - DL-Archetypen validiert!
+2. 🎯 </strong>GRU-First Strategy</strong> - GRU als Default für neue Zeitreihen
+3. 🔄 </strong>Ensemble:</strong> GRU + LightGBM (temporal + features)
+4. 📊 </strong>ACF-Based Routing:</strong> Automatische Modellwahl
+5. 🌐 </strong>Exogene Features:</strong> Wetter-APIs integrieren (Wind, Solar-Irradiance)
+6. 🏭 </strong>Production:</strong> Binary Classifier + Regressor für Wind Offshore
+7. 🔧 </strong>SOTA-Debug:</strong> Kann man N-BEATS/N-HiTS retten? (evtl. nicht lohnend)</p><p>### 💡 Open Questions für Diskussion</p><p>1. </strong>Warum ist GRU so viel besser als Bi-LSTM bei fragmentierten Daten?</strong>
+   - Wind Offshore: +328%! (0.33 vs 0.08)
+   - Einfachheit = Robustheit?</p><p>2. </strong>Warum versagen SOTA-Modelle SO konsistent?</strong>
+   - 5/5 Zeitreihen negativ
+   - Univariate Optimierung vs Feature-Rich Energy Data?
+   - Fundamental falsch für Energy?</p><p>3. </strong>Kann man Wind Offshore auf 0.85+ bringen?</strong>
+   - Exogene Features (Windgeschwindigkeit, Richtung)?
+   - Separate Outage-Prediction?
+   - Hybrid-Modell (Binary + Regressor)?</p><p>4. </strong>GRU + LightGBM Ensemble = 0.99+?</strong>
+   - GRU lernt temporal (0.9874)
+   - LightGBM lernt features (0.95)
+   - Unterschiedliche Fehler → Kombination?</p><p>5. </strong>Transfer Learning zwischen Archetypen?</strong>
+   - Solar-Bi-LSTM → andere PV? ✅
+   - Consumption-GRU → andere Länder? ✅
+   - Zwischen Archetypen? ❌ (zu unterschiedlich)
+</p></div>
+<div class="slide"><p><h2>📚 Referenzen &amp; Quellen</p><p>1. </strong>Daten:</strong> SMARD.de, ENTSO-E Transparency Platform, EPEX Spot
+2. </strong>Frameworks:</strong> scikit-learn, XGBoost, LightGBM, TensorFlow/Keras
+3. </strong>Literatur:</strong>
+   - Hyndman &amp; Athanasopoulos (2021): &quot;Forecasting: Principles and Practice&quot;
+   - Hochreiter &amp; Schmidhuber (1997): &quot;Long Short-Term Memory&quot;
+   - Ke et al. (2017): &quot;LightGBM&quot;
+</p></div>
+<div class="slide"><p><h1>🎤 DANKE FÜR IHRE AUFMERKSAMKEIT!</p><p></strong>Fragen? Diskussion?</strong></p><p></strong>Key Takeaway:</strong> 5 Zeitreihen → 5 Archetypen → Keine Universallösung!  
+</strong>Praktischer Rat:</strong> Teste GRU, LightGBM, Random Forest in dieser Reihenfolge.  
+</strong>Wichtigste Lektion:</strong> Data Quality &gt; Model Complexity (Wind Offshore +36.4 R² durch Cleaning!)
+</p></div>
+
+    </div>
+    
+    <div class="controls">
+        <button onclick="prevSlide()">◀ Zurück</button>
+        <button onclick="nextSlide()">Weiter ▶</button>
+    </div>
+    
+    <div class="slide-number">
+        <span id="current">1</span> / <span id="total">25</span>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total').textContent = totalSlides;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current').textContent = currentSlide + 1;
+        }
+        
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+        
+        // Show first slide
+        showSlide(0);
+    </script>
+</body>
+</html>
