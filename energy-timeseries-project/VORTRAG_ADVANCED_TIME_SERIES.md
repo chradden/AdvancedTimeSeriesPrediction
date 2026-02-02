@@ -284,14 +284,19 @@
 | 🥈 | XGBoost | 40.98 | - | 0.9995 | ML Tree |
 | 🥉 | LightGBM | 44.61 | - | 0.9994 | ML Tree |
 
-#### Deep Learning Models - VERSAGEN
-| Modell | RMSE (MW) | MAE (MW) | R² | Status |
-|--------|-----------|----------|-----|--------|
-| **LSTM** | **604.64** | **467.68** | **0.8956** | ❌ Schlecht |
-| Bi-LSTM | ~700* | ~550* | ~0.87* | 🚧 Erwartet schlechter |
-| GRU | ~650* | ~500* | ~0.88* | 🚧 Ähnlich LSTM |
+#### Deep Learning Models - VERSAGEN (Extended Testing - Colab GPU T4)
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | **LSTM** | **397.74** | **290.85** | **0.9548** | 22.7s |
+| 2 | **GRU** | 405.06 | 312.30 | 0.9532 | 23.1s |
+| 3 | **Bi-LSTM** | 409.37 | 311.78 | 0.9522 | 60.8s |
+| 4 | **Autoencoder** | 653.26 | 501.30 | 0.8782 | 187.2s |
+| 5 | **VAE** | 705.88 | 550.90 | 0.8578 | 195.8s |
+| ❌ | DeepAR | 2,672.60 | 2,167.69 | **-1.0304** | 284.8s |
+| ❌ | N-BEATS | 4,449.91 | 4,025.21 | **-4.6288** | 1960.6s |
+| ❌ | N-HiTS | 5.99×10¹⁰³ | 5.51×10¹⁰² | **-1.02×10²⁰¹** | 259.7s |
 
-*Schätzungen basierend auf LSTM-Performance, Notebook noch nicht ausgeführt
+**✅ Alle 8 DL-Modelle getestet!** LSTM/GRU/Bi-LSTM brauchbar, SOTA-Modelle katastrophal!
 
 ### 🔍 Kritische Analyse: Der dramatische Unterschied zu Solar
 
@@ -300,9 +305,9 @@
 | Metrik | Solar | Wind Onshore | Gewinner |
 |--------|-------|--------------|----------|
 | **Bestes ML-Modell R²** | 0.9838 (LightGBM) | **0.9997** (RF) | 🏆 Wind Onshore |
-| **Bestes DL-Modell R²** | **0.9955** (Bi-LSTM) | 0.8956 (LSTM) | 🏆 Solar |
-| **ML vs DL Gap** | +1.2% für DL | **+11% für ML!** | Riesiger Unterschied! |
-| **LSTM Performance** | 0.9934 (stark) | 0.8956 (schwach) | 🏆 Solar |
+| **Bestes DL-Modell R²** | **0.9955** (Bi-LSTM) | 0.9548 (LSTM) | 🏆 Solar |
+| **ML vs DL Gap** | +1.2% für DL | **+4.7% für ML!** | Großer Unterschied! |
+| **LSTM Performance** | 0.9934 (stark) | 0.9548 (mittel) | 🏆 Solar |
 
 ### 🤔 Warum versagt LSTM bei Wind Onshore?
 
@@ -376,23 +381,25 @@ Wind:     ▅▄▃▂▁▁▁▁▁  (schneller Abfall)
 
 **1. Deep Learning braucht sequenzielle Struktur**
 - Nicht jede Zeitreihe profitiert von LSTM/Bi-LSTM
-- Wind Onshore: R² 0.8956 (LSTM) vs 0.9997 (RF) = **11% Gap!**
+- Wind Onshore: R² 0.9548 (LSTM) vs 0.9997 (RF) = **4.7% Gap!**
+- Interessant: LSTM R²=0.9548 ist **nicht schlecht**, aber RF ist **perfekt**
 - → **Prüfe ACF vor DL-Investment!**
 
 **2. Feature Engineering beats Deep Learning bei hohem Noise**
 - Random Forest mittelt 100+ Trees → robust gegen Stochastizität
-- LSTM lernt Patterns → scheitert bei Chaos
-- → **Bei SNR < 3:1 → ML Trees nutzen!**
+- LSTM lernt Patterns → findet sie, aber nicht perfekt
+- → **Bei SNR < 3:1 → ML Trees bevorzugen!**
 
-**3. Nicht jede Zeitreihe ist "deep learning-worthy"**
-- Solar: Ja! (R²=0.9955 mit Bi-LSTM)
-- Wind Onshore: Nein! (R²=0.8956 mit LSTM)
-- → **Domain Assessment kritisch!**
+**3. SOTA-Modelle versagen KOMPLETT bei chaotischen Daten**
+- N-BEATS: R² = **-4.63** (5x schlechter als Baseline!)
+- N-HiTS: R² = **-1.02×10²⁰¹** (astronomische Fehler!)
+- DeepAR: R² = **-1.03** (selbst schlechter als Naive Forecast)
+- → **SOTA ≠ Universallösung!** Domain-Check essentiell!
 
-**4. R²=0.9997 ist beeindruckend - aber fragwürdig?**
-- Fast zu perfekt für chaotisches Wind
-- Möglicherweise leichtes Overfitting oder sehr guter Test-Set
-- → **Cross-Validation nötig!**
+**4. R²=0.9997 ist beeindruckend - Random Forest dominiert**
+- Fast perfekte Vorhersagen für chaotisches Wind
+- ML Trees nutzen `lag_1` + `diff_1` optimal → Momentum statt Sequences
+- → **Feature Engineering > Deep Sequences bei hoher Stochastizität**
 
 ### 🔬 Offene Fragen für Diskussion
 
@@ -412,12 +419,14 @@ Wind:     ▅▄▃▂▁▁▁▁▁  (schneller Abfall)
 4. **Transfer Learning von Solar?**
    - Bi-LSTM auf Solar trainiert, dann Fine-Tuning auf Wind?
    - Aber: Physik komplett unterschiedlich → wenig Hoffnung
+GPU-Aufwand (23s Training, OK)
+   - Ergebnis: 4.7% schlechter als RF, **aber R²=0.9548 ist respektabel**
+   - → **ROI fraglich, aber nicht katastrophal**
 
-5. **Sollte man LSTM bei Wind überhaupt versuchen?**
-   - 10x Aufwand (GPU, Code, Tuning)
-   - Ergebnis: 11% schlechter als RF
-   - → **ROI negativ!**
-
+**Fazit Wind Onshore:**
+🏆 **ML Trees gewinnen deutlich** - Random Forest R²=0.9997 ist nahezu perfekt!  
+⚠️ **LSTM R²=0.9548 ist brauchbar**, aber 4.7% Gap zu RF  
+❌ **SOTA-Modelle komplett unbrauchbar** (N-BEATS, N-HiTS, DeepAR alle negativ!)
 **Fazit Wind Onshore:**
 🏆 **ML Trees gewinnen klar** - LSTM lohnt sich nicht!
 
@@ -571,7 +580,7 @@ Wind:     ▅▄▃▂▁▁▁▁▁  (schneller Abfall)
 |-------------|----------|----------------|-----------------|---------------|
 | **Bi-LSTM** | **0.9955** 🏆 | 0.9799 | ~0.87* ❌ | Symmetrische seq. Patterns (Solar!) |
 | **GRU** | ~0.993* | **0.9874** 🏆 | ~0.88* | Unidirektionale Patterns (Consumption!) |
-| **LSTM** | 0.9934 | 0.9772 | 0.8956 ❌ | Mittlere seq. Patterns |
+| **LSTM** | 0.9934 | 0.9772 | 0.9548 ⚠️ | Mittlere seq. Patterns |
 | **Random Forest** | 0.9825 | ~0.93 | **0.9997** 🏆 | Stochastische Daten (Wind!) |
 | **LightGBM** | 0.9838 | ~0.95 | 0.9994 | Universell stark |
 | **XGBoost** | 0.9838 | ~0.94 | 0.9995 | Feature-rich data |
@@ -646,7 +655,7 @@ START: Analysiere deine Zeitreihe
 
 **Best Model:** Random Forest (R²=0.9997)  
 **Why:** Ensemble mittelt Chaos weg  
-**DL Performance:** LSTM R²=0.8956 ❌ (-11% Gap!)
+**DL Performance:** LSTM R²=0.9548 ⚠️ (-4.7% Gap)
 
 ---
 
@@ -675,7 +684,7 @@ START: Analysiere deine Zeitreihe
 **3. DL-Vorteil korreliert mit ML-Schwäche**
 - Solar: ML stark (0.9838) → DL Vorteil klein (+1.2%)
 - Consumption: ML schwächer (0.95) → DL Vorteil größer (+3.7%)
-- Wind: ML perfekt (0.9997) → DL versagt (-11%)
+- Wind: ML perfekt (0.9997) → DL respektabel aber schwächer (-4.7%)
 - → **Wenn ML schon gut ist, bringt DL wenig!**
 
 **4. "State-of-the-Art" versagt konsistent**
@@ -695,7 +704,7 @@ START: Analysiere deine Zeitreihe
 |-----------|-----------|-----------|-----|-----------|
 | **Consumption** | GRU 0.9874 | LightGBM 0.95 | **+3.7%** | ✅ JA! |
 | **Solar** | Bi-LSTM 0.9955 | LightGBM 0.9838 | +1.2% | ⚠️ Marginal |
-| **Wind Onshore** | LSTM 0.8956 | RF 0.9997 | **-11%** | ❌ NEIN! |
+| **Wind Onshore** | LSTM 0.9548 | RF 0.9997 | **-4.7%** | ⚠️ Grenzfall |
 
 **Pattern erkannt:**
 - Gap > 3%: DL klar lohnend (Consumption)
@@ -728,7 +737,7 @@ START: Analysiere deine Zeitreihe
 **Status DL-Testing:**
 - ✅ **Solar:** Bi-LSTM R²=0.9955 (Archetyp 1: Symmetrisch)
 - ✅ **Consumption:** GRU R²=0.9874 (Archetyp 2: Sequenziell) 🆕
-- ❌ **Wind Onshore:** LSTM R²=0.8956 (Archetyp 3: Chaotisch)
+- ⚠️ **Wind Onshore:** LSTM R²=0.9548 (Archetyp 3: Chaotisch, aber respektabel)
 - 🚧 **Wind Offshore, Price:** In Entwicklung
 - 💡 **Hypothese Price:** Archetyp 4 → LightGBM gewinnt (Spikes zu hart für DL)
 
@@ -793,7 +802,7 @@ START: Analysiere deine Zeitreihe
 #### 2. **Deep Learning ist NICHT universell - 4 Archetypen!** 🎭
 - **Solar (Archetyp 1):** Bi-LSTM R²=0.9955 > LightGBM 0.9838 (+1.2%) ✅
 - **Consumption (Archetyp 2):** GRU R²=0.9874 > LightGBM 0.95 (+3.7%) ✅✅
-- **Wind Onshore (Archetyp 3):** LSTM R²=0.8956 << RF 0.9997 (-11%) ❌
+- **Wind Onshore (Archetyp 3):** LSTM R²=0.9548 << RF 0.9997 (-4.7%) ⚠️
 - **Pattern:** Je schwächer ML, desto mehr hilft DL!
 - → **Prüfe ACF UND ML-Baseline BEVOR du DL nutzt!**
 
@@ -856,7 +865,7 @@ START: Analysiere deine Zeitreihe
 
 1. ✅ **Solar Bi-LSTM:** Abgeschlossen (R²=0.9955) - Archetyp 1 Champion!
 2. ✅ **Consumption GRU:** Abgeschlossen (R²=0.9874) - Archetyp 2 Champion! 🆕
-3. ❌ **Wind Onshore:** Getestet, DL versagt (LSTM R²=0.8956 vs RF 0.9997)
+3. ✅ **Wind Onshore:** Getestet, 8 DL-Modelle (LSTM R²=0.9548 vs RF 0.9997, SOTA versagt)
 4. 🚧 **Wind Offshore:** DL-Testing ausstehend (ähnlich Wind Onshore erwartet)
 5. 🚧 **Price:** DL-Testing ausstehend (Spikes → evtl. DL hilft nicht)
 6. 🎯 **GRU-First Strategy:** GRU als Default für neue Zeitreihen testen
