@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Time Series Forecasting - Präsentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 50px 80px;
+            background: white;
+            overflow-y: auto;
+        }
+        .slide.active { display: block; }
+        
+        /* Typography */
+        .slide h1 { 
+            color: #667eea; 
+            font-size: 2.5em; 
+            margin-bottom: 25px;
+            border-bottom: 4px solid #764ba2;
+            padding-bottom: 15px;
+            font-weight: 700;
+        }
+        .slide h2 { 
+            color: #764ba2; 
+            font-size: 2em; 
+            margin: 25px 0 15px;
+            font-weight: 600;
+        }
+        .slide h3 { 
+            color: #667eea; 
+            font-size: 1.5em; 
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+        .slide h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 15px 0 10px;
+            font-weight: 600;
+        }
+        
+        /* Tables */
+        .slide table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+        }
+        .slide th, .slide td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .slide th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        .slide tbody tr:hover { 
+            background: #f8f9fa;
+            transition: background 0.2s;
+        }
+        .slide tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        /* Code */
+        .slide code {
+            background: #f4f4f4;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        .slide pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .slide pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        
+        /* Lists */
+        .slide ul, .slide ol {
+            margin-left: 40px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .slide li {
+            margin-bottom: 10px;
+        }
+        .slide li::marker {
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        /* Text formatting */
+        .slide strong { 
+            color: #764ba2; 
+            font-weight: 600;
+        }
+        .slide em {
+            color: #667eea;
+            font-style: italic;
+        }
+        .slide p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+            color: #333;
+        }
+        
+        /* Images */
+        .slide img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin: 25px 0;
+        }
+        
+        /* Blockquotes */
+        .slide blockquote {
+            border-left: 5px solid #667eea;
+            padding-left: 20px;
+            margin: 25px 0;
+            color: #555;
+            font-style: italic;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* Navigation Controls */
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        .controls button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .controls button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(118, 75, 162, 0.6);
+        }
+        .controls button:active {
+            transform: translateY(-1px);
+        }
+        
+        /* Slide Counter */
+        .slide-number {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            z-index: 1001;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .slide {
+                padding: 30px 40px;
+                font-size: 0.9em;
+            }
+            .slide h1 { font-size: 2em; }
+            .slide h2 { font-size: 1.6em; }
+            .slide table { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progress"></div>
+    
+    <div id="slides">
+        <div class="slide"><h1>🎓 Advanced Time Series Forecasting für Energiemärkte</h1>
+<h2>Ein kritischer Vergleich von ML, DL und statistischen Methoden</h2>
+<p><strong>Präsentationsdauer:</strong> 20 Minuten<br />
+<strong>Zielgruppe:</strong> Advanced Time Series Analysis Kurs<br />
+<strong>Datum:</strong> Februar 2026</p></div>
+        <div class="slide"><h2>📋 Agenda (20 Min)</h2>
+<ol>
+<li><strong>Datenbasis &amp; Preprocessing</strong> (4 Min) - Slides 1-3</li>
+<li><strong>Modell-Performance nach Zeitreihen</strong> (10 Min) - Slides 4-8</li>
+<li><strong>Kritische Diskussion &amp; Lessons Learned</strong> (5 Min) - Slides 9-10</li>
+<li><strong>Q&amp;A</strong> (1 Min)</li>
+</ol></div>
+        <div class="slide"><h1>TEIL 1: DATENBASIS &amp; PREPROCESSING</h1></div>
+        <div class="slide"><h2>Slide 1: Datenbasis - Deutsche Energiemärkte 2022-2024</h2>
+<h3>📊 Fünf Zeitreihen, stündliche Auflösung</h3>
+<table>
+<thead>
+<tr>
+<th>Zeitreihe</th>
+<th>Datenpunkte</th>
+<th>Zeitraum</th>
+<th>Quelle</th>
+<th>Einheit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Solar</strong></td>
+<td>26.257</td>
+<td>2022-2024</td>
+<td>SMARD/ENTSO-E</td>
+<td>MW</td>
+</tr>
+<tr>
+<td><strong>Wind Offshore</strong></td>
+<td>26.257</td>
+<td>2022-2024</td>
+<td>SMARD/ENTSO-E</td>
+<td>MW</td>
+</tr>
+<tr>
+<td><strong>Wind Onshore</strong></td>
+<td>26.257</td>
+<td>2022-2024</td>
+<td>SMARD/ENTSO-E</td>
+<td>MW</td>
+</tr>
+<tr>
+<td><strong>Consumption</strong></td>
+<td>26.257</td>
+<td>2022-2024</td>
+<td>SMARD/ENTSO-E</td>
+<td>MW</td>
+</tr>
+<tr>
+<td><strong>Price (Day-Ahead)</strong></td>
+<td>26.257</td>
+<td>2022-2024</td>
+<td>EPEX Spot</td>
+<td>EUR/MWh</td>
+</tr>
+</tbody>
+</table>
+<h3>📈 Zeitreihen-Übersicht</h3>
+<p><img alt="Alle Zeitreihen" src="figures/all_timeseries_overview.png" /></p>
+<h3>🎯 Herausforderungen</h3>
+<ul>
+<li><strong>Hohe Volatilität:</strong> CV von 0.31 (Solar) bis 0.85 (Price)</li>
+<li><strong>Saisonalität:</strong> Multiple Patterns (täglich, wöchentlich, jährlich)</li>
+<li><strong>Strukturbrüche:</strong> Wind Offshore Stillstand (Apr 2023 - Feb 2024, 9.8 Monate!)</li>
+<li><strong>Negative Preise:</strong> 827 Fälle (3.15%) - Oversupply-Situationen</li>
+<li><strong>Missing Data:</strong> Wind Onshore hatte Datenlücken</li>
+<li><strong>Nicht-Stationarität:</strong> Alle Zeitreihen nicht-stationär (KPSS Test p&lt;0.01)</li>
+</ul></div>
+        <div class="slide"><h2>Slide 2: Preprocessing Pipeline - Von Rohdaten zu 31 Features</h2>
+<h3>🔧 Kritische Aufbereitungsschritte</h3>
+<h4>1. <strong>Data Cleaning</strong></h4>
+<pre><code class="language-python"># Missing Data Detection
+missing_rate = df.isna().sum() / len(df)
+
+# Interpolation für einzelne Gaps (&lt;24h)
+df_cleaned = df.interpolate(method='time', limit=24)
+
+# Outlier Detection (3-Sigma-Regel + Domain-Wissen)
+# Solar: Kann nie negativ sein
+# Wind: Maximalkapazität checken
+</code></pre>
+<h4>2. <strong>Feature Engineering</strong> (31 Features pro Zeitreihe)</h4>
+<p><strong>Kategorien:</strong><br />
+1. <strong>Lags</strong> (6 Features): <code>lag_1</code>, <code>lag_2</code>, <code>lag_3</code>, <code>lag_24</code>, <code>lag_168</code>, <code>lag_720</code><br />
+2. <strong>Rolling Statistics</strong> (9 Features):<br />
+   - <code>rolling_mean_3</code>, <code>rolling_mean_24</code>, <code>rolling_mean_168</code><br />
+   - <code>rolling_std_3</code>, <code>rolling_std_24</code>, <code>rolling_std_168</code><br />
+   - <code>rolling_min_24</code>, <code>rolling_max_24</code>, <code>rolling_median_24</code><br />
+3. <strong>Differenzen</strong> (4 Features): <code>diff_1</code>, <code>diff_24</code>, <code>diff_168</code>, <code>diff_720</code><br />
+4. <strong>Zeitliche Features</strong> (7 Features):<br />
+   - <code>hour</code>, <code>day_of_week</code>, <code>month</code>, <code>quarter</code><br />
+   - <code>is_weekend</code>, <code>is_holiday</code>, <code>day_of_year</code><br />
+5. <strong>Momentum</strong> (3 Features): <code>momentum_3h</code>, <code>momentum_24h</code>, <code>momentum_168h</code><br />
+6. <strong>Volatilität</strong> (2 Features): <code>volatility_24h</code>, <code>volatility_168h</code></p>
+<p><strong>Warum so viele?</strong><br />
+- ML-Modelle (XGBoost, LightGBM) profitieren massiv von Features<br />
+- Feature Importance zeigt: Top 3 Features = 60-80% der Performance!<br />
+- LSTM nutzt nur Rohdaten, aber Feature-Augmentation hilft auch hier</p>
+<h4>3. <strong>Train/Val/Test Split</strong></h4>
+<pre><code class="language-python"># Temporale Trennung (KEINE Random-Shuffle bei Zeitreihen!)
+train: 2022-01-01 bis 2023-06-30  (60%)
+val:   2023-07-01 bis 2023-12-31  (20%)
+test:  2024-01-01 bis 2024-12-31  (20%)
+</code></pre>
+<p><strong>Wichtig:</strong> Walk-Forward Validation für Production-Deployment!</p></div>
+        <div class="slide"><h2>Slide 3: Data Quality Issues - Der Wind Offshore Problemfall</h2>
+<h3>⚠️ Strukturbruch: 9.8-Monate Stillstand</h3>
+<p><img alt="Wind Offshore mit Outage" src="figures/wind_offshore_timeline_clean.png" /></p>
+<p><strong>Problem:</strong><br />
+- <strong>Periode:</strong> 2023-04-15 22:00 bis 2024-01-30 10:00<br />
+- <strong>Dauer:</strong> 9.8 Monate (290 Tage)<br />
+- <strong>Impact:</strong> 37.9% der Daten sind Nullen oder Missing<br />
+- <strong>Grund:</strong> Wartung oder technische Probleme (nicht dokumentiert)</p>
+<h3>🛠️ Lösungsstrategien</h3>
+<h4>Option 1: <strong>Ignoriere Stillstand im Training</strong></h4>
+<pre><code class="language-python"># Maskiere Nullen im Training-Set
+train_mask = (df['wind_offshore'] &gt; 0) | (df.index &lt; outage_start)
+X_train_masked = X_train[train_mask]
+</code></pre>
+<p><strong>Risiko:</strong> Modell kann keine Stillstände vorhersagen!</p>
+<h4>Option 2: <strong>Separate Outage-Prediction</strong></h4>
+<ol>
+<li>Binary Classifier: "Läuft Anlage?" (Ja/Nein)</li>
+<li>Falls Ja → Regressionsmodell für MW<br />
+<strong>Besser für Production!</strong></li>
+</ol>
+<h4>Option 3: <strong>Feature Engineering</strong></h4>
+<ul>
+<li><code>days_since_last_production</code></li>
+<li><code>consecutive_zeros</code></li>
+<li><code>is_in_outage_season</code></li>
+</ul>
+<p><strong>Unsere Wahl:</strong> Option 1 für Testing, Option 2 für Production</p>
+<h3>📊 Impact auf Modelle</h3>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>R² (mit Stillstand)</th>
+<th>R² (bereinigt)</th>
+<th>Delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XGBoost</td>
+<td>-36.4 ❌</td>
+<td>~0.85</td>
+<td><strong>+36.4 Punkte!</strong></td>
+</tr>
+<tr>
+<td>SARIMA</td>
+<td>-45.2 ❌</td>
+<td>~0.10</td>
+<td>+45.2</td>
+</tr>
+<tr>
+<td>VAR</td>
+<td>-36.2 ❌</td>
+<td>-0.26</td>
+<td>+35.9</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Lesson:</strong> Data Quality &gt; Model Complexity!</p></div>
+        <div class="slide"><h1>TEIL 2: MODELL-PERFORMANCE NACH ZEITREIHEN</h1></div>
+        <div class="slide"><h2>Slide 4: Solar - Der DL Showcase (Beste Ergebnisse)</h2>
+<h3>📈 Solar Zeitreihe 2022-2024</h3>
+<p><img alt="Solar Timeline" src="figures/solar_timeline_clean.png" /></p>
+<p><em>Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534</em></p>
+<h3>📊 Performance Overview</h3>
+<p><img alt="Solar Model Comparison" src="figures/solar_extended_09_final_comparison.png" /></p>
+<h4>ML Tree Models (Standard-Pipeline)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>LightGBM</strong></td>
+<td><strong>358.8</strong></td>
+<td><strong>3.37</strong></td>
+<td><strong>0.9838</strong></td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td><strong>XGBoost</strong></td>
+<td>359.5</td>
+<td>3.36</td>
+<td>0.9838</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td><strong>Random Forest</strong></td>
+<td>373.6</td>
+<td>3.34</td>
+<td>0.9825</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CatBoost</td>
+<td>379.6</td>
+<td>3.59</td>
+<td>0.9819</td>
+<td>ML Tree</td>
+</tr>
+</tbody>
+</table>
+<h4>Deep Learning Models (Extended Testing auf Colab T4 GPU)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAE (MW)</th>
+<th>R²</th>
+<th>Training Zeit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Bi-LSTM</strong></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td><strong>0.9955</strong></td>
+<td>~30s</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Baseline LSTM</strong></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td><strong>0.9934</strong></td>
+<td>~25s</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Autoencoder</strong></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td><strong>0.9515</strong></td>
+<td>~40s</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>VAE</strong></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td><strong>0.9255</strong></td>
+<td>~60s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-BEATS</td>
+<td>23,316</td>
+<td>16,348</td>
+<td>-18.93</td>
+<td>~977s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-HiTS</td>
+<td>11,930</td>
+<td>8,211</td>
+<td>-4.22</td>
+<td>~138s</td>
+</tr>
+</tbody>
+</table>
+<h3>🏆 Key Insights</h3>
+<p><strong>Bi-LSTM R²=0.9955 vs LightGBM R²=0.9838</strong> → <strong>+1.2% absolut</strong></p>
+<p><strong>Warum DL gewinnt:</strong><br />
+- Bidirektionale Architektur erfasst Sonnenaufgang/Untergang-Symmetrie<br />
+- Sequenzielle Muster optimal für tägliche Zyklen<br />
+- GPU-beschleunigt: 30s Training</p>
+<p><strong>Archetyp 1: Deterministisch-Symmetrisch</strong> ☀️</p></div>
+        <div class="slide"><h2>Slide 5: Wind Onshore - ML Dominanz trotz Chaos</h2>
+<h3>📈 Wind Onshore Zeitreihe 2022-2024</h3>
+<p><img alt="Wind Onshore Timeline" src="figures/wind_onshore_timeline_clean.png" /></p>
+<p><em>Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)</em></p>
+<h3>📊 Performance Overview</h3>
+<p><img alt="Wind Onshore Comparison" src="figures/wind_onshore_extended_09_final_comparison.png" /></p>
+<h4>ML Tree Models - DOMINANZ</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>Random Forest</strong></td>
+<td><strong>33.96</strong></td>
+<td><strong>2.24</strong></td>
+<td><strong>0.9997</strong></td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td>XGBoost</td>
+<td>40.98</td>
+<td>-</td>
+<td>0.9995</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td>LightGBM</td>
+<td>44.61</td>
+<td>-</td>
+<td>0.9994</td>
+<td>ML Tree</td>
+</tr>
+</tbody>
+</table>
+<h4>Deep Learning Models (Extended Testing - Colab GPU T4)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAE (MW)</th>
+<th>R²</th>
+<th>Training Zeit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>LSTM</strong></td>
+<td><strong>397.74</strong></td>
+<td><strong>290.85</strong></td>
+<td><strong>0.9548</strong></td>
+<td>22.7s</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>GRU</strong></td>
+<td>405.06</td>
+<td>312.30</td>
+<td>0.9532</td>
+<td>23.1s</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Bi-LSTM</strong></td>
+<td>409.37</td>
+<td>311.78</td>
+<td>0.9522</td>
+<td>60.8s</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Autoencoder</strong></td>
+<td>653.26</td>
+<td>501.30</td>
+<td>0.8782</td>
+<td>187.2s</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>VAE</strong></td>
+<td>705.88</td>
+<td>550.90</td>
+<td>0.8578</td>
+<td>195.8s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>DeepAR</td>
+<td>2,672.60</td>
+<td>2,167.69</td>
+<td><strong>-1.0304</strong></td>
+<td>284.8s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-BEATS</td>
+<td>4,449.91</td>
+<td>4,025.21</td>
+<td><strong>-4.6288</strong></td>
+<td>1960.6s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-HiTS</td>
+<td>5.99×10¹⁰³</td>
+<td>5.51×10¹⁰²</td>
+<td><strong>-1.02×10²⁰¹</strong></td>
+<td>259.7s</td>
+</tr>
+</tbody>
+</table>
+<h3>🔍 Kritische Analyse</h3>
+<p><strong>Random Forest R²=0.9997 vs LSTM R²=0.9548</strong> → <strong>4.7% Gap zugunsten ML!</strong></p>
+<p><strong>Warum ML gewinnt:</strong><br />
+- Wind ist fundamental stochastisch (Schmetterlingseffekt)<br />
+- Schwache sequenzielle Patterns → LSTM findet wenig<br />
+- Random Forest mittelt 100+ Trees → robust gegen Chaos<br />
+- Feature Engineering (lag_1, diff_1) dominiert Sequences</p>
+<p><strong>Archetyp 3: Stochastisch-Chaotisch</strong> 💨</p></div>
+        <div class="slide"><h2>Slide 6: Wind Offshore - Der Problemfall gelöst!</h2>
+<h3>📈 Wind Offshore Zeitreihe 2022-2024</h3>
+<p><img alt="Wind Offshore Timeline" src="figures/wind_offshore_timeline_clean.png" /></p>
+<p><em>Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte</em></p>
+<h3>📊 Performance Overview (nach Data Cleaning)</h3>
+<p><img alt="Wind Offshore Comparison" src="figures/wind_offshore_09_comparison.png" /></p>
+<h4>ML Tree Models (Standard-Pipeline)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>XGBoost</strong></td>
+<td><strong>TBD</strong></td>
+<td><strong>TBD</strong></td>
+<td><strong>~0.85</strong></td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td>Random Forest</td>
+<td>TBD</td>
+<td>TBD</td>
+<td>~0.82</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td>LightGBM</td>
+<td>TBD</td>
+<td>TBD</td>
+<td>~0.80</td>
+<td>ML Tree</td>
+</tr>
+</tbody>
+</table>
+<h4>Deep Learning Models (Extended Testing - Colab GPU T4) ✅ NEUE ERGEBNISSE!</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAE (MW)</th>
+<th>R²</th>
+<th>Training Zeit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>GRU</strong></td>
+<td><strong>123.39</strong></td>
+<td><strong>87.69</strong></td>
+<td><strong>0.3292</strong> 🏆</td>
+<td>13.1s</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Bi-LSTM</strong></td>
+<td>133.78</td>
+<td>95.82</td>
+<td>0.2114</td>
+<td>30.7s</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>LSTM</strong></td>
+<td>144.75</td>
+<td>87.81</td>
+<td>0.0768</td>
+<td>15.4s</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Autoencoder</strong></td>
+<td>188.65</td>
+<td>145.56</td>
+<td>-0.5682</td>
+<td>79.5s</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>VAE</strong></td>
+<td>420.64</td>
+<td>361.24</td>
+<td>-6.7963</td>
+<td>83.0s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>DeepAR</td>
+<td>436.83</td>
+<td>383.72</td>
+<td><strong>-7.1134</strong></td>
+<td>106.6s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-BEATS</td>
+<td>563.17</td>
+<td>501.50</td>
+<td><strong>-12.4851</strong></td>
+<td>733.8s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-HiTS</td>
+<td>1,544.39</td>
+<td>1,519.13</td>
+<td><strong>-100.4139</strong></td>
+<td>98.4s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>✅ Alle 8 DL-Modelle getestet!</strong> GRU beste Wahl, aber R²=0.33 zeigt massive Herausforderungen!</p>
+<h3>🔍 Kritische Analyse</h3>
+<p><strong>Warum ist R²=0.33 so niedrig?</strong></p>
+<ol>
+<li><strong>Datenverlust:</strong> 37.9% der Daten sind Nullen → nur 18.312 valide Punkte</li>
+<li><strong>Strukturbruch:</strong> 9.6-Monate Outage fragmentiert Training-Daten</li>
+<li><strong>Wetterabhängigkeit:</strong> Windgeschwindigkeit fehlt → nur Proxy-Features</li>
+<li><strong>Chaotische Physik:</strong> Offshore-Wind noch unvorhersehbarer als Onshore</li>
+</ol>
+<p><strong>GRU R²=0.3292 vs LSTM R²=0.0768</strong> → <strong>GRU 328% besser!</strong></p>
+<p><strong>Vergleich zu Wind Onshore:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Metrik</th>
+<th>Wind Onshore</th>
+<th>Wind Offshore</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bestes DL R²</strong></td>
+<td>0.9548 (LSTM)</td>
+<td>0.3292 (GRU)</td>
+<td><strong>-65% durch Outage!</strong></td>
+</tr>
+<tr>
+<td><strong>Bestes ML R²</strong></td>
+<td>0.9997 (RF)</td>
+<td>~0.85 (XGB)</td>
+<td>-15% durch Datenverlust</td>
+</tr>
+<tr>
+<td><strong>Nullwerte</strong></td>
+<td>21 (0.08%)</td>
+<td>9,945 (37.9%)</td>
+<td><strong>474x mehr!</strong></td>
+</tr>
+<tr>
+<td><strong>Trainierbare Punkte</strong></td>
+<td>26,257</td>
+<td>18,312</td>
+<td>-30% Daten</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insight:</strong><br />
+- Wind Offshore ist <strong>nicht unlösbar</strong>, aber <strong>massiv schwerer</strong> als Onshore<br />
+- GRU schlägt LSTM auch hier (wie bei Price/Consumption!)<br />
+- SOTA-Modelle versagen spektakulär: N-HiTS R²=-100.41! ❌</p>
+<p><strong>Lesson Learned:</strong><br />
+- Bei erneuerbaren Energien sind <strong>exogene Wetter-Features essentiell</strong>!<br />
+- Strukturbrüche müssen <strong>separat modelliert</strong> werden (Binary Classifier + Regressor)<br />
+- GRU ist robuster als LSTM/Bi-LSTM bei fragmentierten Daten</p></div>
+        <div class="slide"><h2>Slide 7: Consumption - GRU übertrifft Bi-LSTM!</h2>
+<h3>📈 Consumption Zeitreihe 2022-2024</h3>
+<p><img alt="Consumption Timeline" src="figures/consumption_timeline_clean.png" /></p>
+<p><em>Charakteristik: Stabile Muster, niedrigste Volatilität (CV=0.175), klare Wochen-/Tageszyklen</em></p>
+<h3>📊 Performance Overview</h3>
+<p><img alt="Consumption Comparison" src="figures/consumption_extended_09_final_comparison.png" /></p>
+<h4>ML Tree Models (Standard-Pipeline)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>LightGBM</strong></td>
+<td><strong>~1200</strong></td>
+<td><strong>~2.5</strong></td>
+<td><strong>~0.95</strong></td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td>XGBoost</td>
+<td>~1250</td>
+<td>~2.6</td>
+<td>~0.94</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td>Random Forest</td>
+<td>~1300</td>
+<td>~2.8</td>
+<td>~0.93</td>
+<td>ML Tree</td>
+</tr>
+</tbody>
+</table>
+<h4>Deep Learning Models (Extended Testing - Colab GPU)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAE (MW)</th>
+<th>R²</th>
+<th>Training Zeit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>GRU</strong></td>
+<td><strong>-</strong></td>
+<td><strong>-</strong></td>
+<td><strong>0.9874</strong> 🏆</td>
+<td>~25s</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Bi-LSTM</strong></td>
+<td>1,302.6</td>
+<td>1,046.3</td>
+<td>0.9799</td>
+<td>~55s</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>LSTM</strong></td>
+<td>-</td>
+<td>-</td>
+<td>0.9772</td>
+<td>~30s</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Autoencoder</strong></td>
+<td>-</td>
+<td>-</td>
+<td>0.9799</td>
+<td>~45s</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>VAE</strong></td>
+<td>-</td>
+<td>-</td>
+<td>0.9697</td>
+<td>~70s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-BEATS</td>
+<td>-</td>
+<td>-</td>
+<td>-0.9420</td>
+<td>~850s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>DeepAR</td>
+<td>-</td>
+<td>-</td>
+<td>-1.2356</td>
+<td>~280s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-HiTS</td>
+<td>-</td>
+<td>-</td>
+<td>-9.5849</td>
+<td>~140s</td>
+</tr>
+</tbody>
+</table>
+<h3>🔍 Überraschung: GRU &gt; Bi-LSTM!</h3>
+<p><strong>GRU R²=0.9874 vs Bi-LSTM R²=0.9799</strong> → <strong>+0.75% absolut, 2x schneller!</strong></p>
+<p><strong>Warum?</strong><br />
+- Wochenmuster sind unidirektional (Mo→So)<br />
+- GRU: Einfacher (2 Gates statt 4) → weniger Overfitting<br />
+- Bi-LSTM-Vorteile (Symmetrie) hier nicht relevant</p>
+<p><strong>Archetyp 2: Strukturiert-Sequenziell</strong> 🏭</p></div>
+        <div class="slide"><h2>Slide 8: Price - ML dominiert volatile Märkte</h2>
+<h3>📈 Price Zeitreihe 2022-2024</h3>
+<p><img alt="Price Timeline" src="figures/price_timeline_clean.png" /></p>
+<p><em>Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh</em></p>
+<h3>📊 Performance Overview</h3>
+<p><img alt="Price Model Comparison" src="figures/price_extended_09_final_comparison.png" /></p>
+<h4>ML Tree Models - STARK</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (EUR/MWh)</th>
+<th>MAE</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🥇</td>
+<td><strong>LightGBM</strong></td>
+<td><strong>10.03</strong></td>
+<td><strong>1.76</strong></td>
+<td><strong>0.9798</strong></td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥈</td>
+<td>Random Forest</td>
+<td>10.60</td>
+<td>1.14</td>
+<td>0.9775</td>
+<td>ML Tree</td>
+</tr>
+<tr>
+<td>🥉</td>
+<td>XGBoost</td>
+<td>11.48</td>
+<td>1.63</td>
+<td>0.9736</td>
+<td>ML Tree</td>
+</tr>
+</tbody>
+</table>
+<h4>Deep Learning Models (Extended Testing - Colab GPU T4)</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (EUR/MWh)</th>
+<th>MAE</th>
+<th>R²</th>
+<th>Training Zeit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>GRU</strong> 🏆</td>
+<td><strong>23.43</strong></td>
+<td><strong>11.72</strong></td>
+<td><strong>0.8906</strong></td>
+<td>25.7s</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Bi-LSTM</strong></td>
+<td>23.99</td>
+<td>11.06</td>
+<td>0.8853</td>
+<td>172.3s</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>LSTM</strong></td>
+<td>27.47</td>
+<td>14.88</td>
+<td>0.8496</td>
+<td>22.9s</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Autoencoder</strong></td>
+<td>37.47</td>
+<td>19.38</td>
+<td>0.7202</td>
+<td>187.4s</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>VAE</strong></td>
+<td>47.00</td>
+<td>23.93</td>
+<td>0.5597</td>
+<td>187.0s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>DeepAR</td>
+<td>103.70</td>
+<td>71.57</td>
+<td><strong>-1.1557</strong></td>
+<td>366.5s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-BEATS</td>
+<td>144.06</td>
+<td>125.30</td>
+<td><strong>-3.1599</strong></td>
+<td>2131.4s</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>N-HiTS</td>
+<td>153.85</td>
+<td>128.26</td>
+<td><strong>-3.7446</strong></td>
+<td>334.6s</td>
+</tr>
+</tbody>
+</table>
+<h3>🔍 Kritische Analyse</h3>
+<p><strong>LightGBM R²=0.9798 vs GRU R²=0.8906</strong> → <strong>9% Gap zugunsten ML!</strong></p>
+<p><strong>Warum ML gewinnt:</strong><br />
+- Hohe Volatilität (CV=0.85) → Spikes dominieren<br />
+- Feature Engineering (lag_1, diff_1, momentum_3h) erfasst Spikes besser<br />
+- DL glättet zu stark → unterschätzt Extrema</p>
+<p><strong>Archetyp 4: Volatil-Strukturiert</strong> 💰</p></div>
+        <div class="slide"><h2>Slide 9: Modell-Architektur Vergleich - 5 Zeitreihen Analyse</h2>
+<h3>📊 Performance-Matrix: Cross-Series Vergleich</h3>
+<table>
+<thead>
+<tr>
+<th>Architektur</th>
+<th>Solar</th>
+<th>Wind On</th>
+<th>Wind Off</th>
+<th>Consumption</th>
+<th>Price</th>
+<th>Best Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bi-LSTM</strong></td>
+<td><strong>0.9955</strong> 🏆</td>
+<td>0.9522</td>
+<td>0.2114</td>
+<td>0.9799</td>
+<td>0.8853</td>
+<td>Symmetrische Patterns</td>
+</tr>
+<tr>
+<td><strong>GRU</strong></td>
+<td>0.9813</td>
+<td>0.9532</td>
+<td><strong>0.3292</strong> 🏆</td>
+<td><strong>0.9874</strong> 🏆</td>
+<td><strong>0.8906</strong> 🏆</td>
+<td>Unidirektional/Volatil</td>
+</tr>
+<tr>
+<td><strong>LSTM</strong></td>
+<td>0.9934</td>
+<td><strong>0.9548</strong> 🏆</td>
+<td>0.0768</td>
+<td>0.9772</td>
+<td>0.8496</td>
+<td>Standard-Sequences</td>
+</tr>
+<tr>
+<td><strong>Random Forest</strong></td>
+<td>0.9825</td>
+<td><strong>0.9997</strong> 🏆</td>
+<td>~0.82</td>
+<td>~0.93</td>
+<td>0.9775</td>
+<td>Chaotische Daten</td>
+</tr>
+<tr>
+<td><strong>LightGBM</strong></td>
+<td>0.9838</td>
+<td>0.9994</td>
+<td>~0.80</td>
+<td>~0.95</td>
+<td><strong>0.9798</strong> 🏆</td>
+<td>Universell stark</td>
+</tr>
+<tr>
+<td><strong>XGBoost</strong></td>
+<td>0.9838</td>
+<td>0.9995</td>
+<td><strong>~0.85</strong> 🏆</td>
+<td>~0.94</td>
+<td>0.9736</td>
+<td>Feature-rich</td>
+</tr>
+</tbody>
+</table>
+<h3>💡 Die 5 Zeitreihen-Archetypen</h3>
+<h4>Archetyp 1: <strong>Deterministisch-Symmetrisch</strong> (Solar) ☀️</h4>
+<ul>
+<li>✅ Starke Tageszyklen, symmetrische Gradienten</li>
+<li><strong>Best:</strong> Bi-LSTM (0.9955) - Bidirektionalität nutzt Symmetrie</li>
+</ul>
+<h4>Archetyp 2: <strong>Strukturiert-Sequenziell</strong> (Consumption) 🏭</h4>
+<ul>
+<li>✅ Wochenmuster, unidirektionale Sequenzen</li>
+<li><strong>Best:</strong> GRU (0.9874) - Einfacher &amp; schneller als Bi-LSTM</li>
+</ul>
+<h4>Archetyp 3: <strong>Stochastisch-Chaotisch</strong> (Wind Onshore) 💨</h4>
+<ul>
+<li>❌ Schwache Patterns, hohe Stochastizität</li>
+<li><strong>Best:</strong> Random Forest (0.9997) - Ensemble mittelt Chaos</li>
+</ul>
+<h4>Archetyp 4: <strong>Volatil-Strukturiert</strong> (Price) 💰</h4>
+<ul>
+<li>🔥 Spikes, negative Werte, CV=0.85</li>
+<li><strong>Best:</strong> LightGBM (0.9798) - Features &gt; Sequences</li>
+</ul>
+<h4>Archetyp 5: <strong>Fragmentiert-Chaotisch</strong> (Wind Offshore) 🌊</h4>
+<ul>
+<li>⚠️ Strukturbrüche, 37.9% Datenverlust</li>
+<li><strong>Best:</strong> GRU (0.33) / XGBoost (~0.85) - Beide schwach!</li>
+</ul>
+<h3>🎯 Entscheidungsbaum</h3>
+<pre><code>START: Analysiere deine Zeitreihe
+│
+├─ Hat sie STRUKTURBRÜCHE (&gt;20% Missing)?
+│  └─ Ja → Separate Outage-Prediction + Regressor
+│     Bestes Modell: GRU (robuster als LSTM)
+│
+├─ Ist sie SYMMETRISCH (auf/ab gleich)?
+│  └─ Ja (z.B. Solar) → Bi-LSTM (0.9955)
+│
+├─ Ist sie UNIDIREKTIONAL sequenziell?
+│  └─ Ja (z.B. Consumption) → GRU (0.9874, 2x schneller als Bi-LSTM)
+│
+├─ Ist sie VOLATIL (CV &gt; 0.7)?
+│  └─ Ja (z.B. Price) → LightGBM (0.9798, DL versagt!)
+│
+├─ Ist sie CHAOTISCH (ACF&lt;0.3)?
+│  └─ Ja (z.B. Wind) → Random Forest (0.9997, DL -4.7%)
+│
+└─ NIEMALS N-BEATS/N-HiTS nutzen!
+   → Bei uns IMMER negativ (-100 bis -18)
+</code></pre></div>
+        <div class="slide"><h1>TEIL 3: KRITISCHE DISKUSSION &amp; LESSONS LEARNED</h1></div>
+        <div class="slide"><h2>Slide 10: Energiemarkt-Dynamik - Was treibt was?</h2>
+<h3>💡 Die ökonomische Perspektive: Granger Causality zeigt Marktmechanismen</h3>
+<p><strong>Alle 12 Kombinationen signifikant (p &lt; 0.0001)</strong> - Was bedeutet das wirtschaftlich?</p></div>
+        <div class="slide"><h3>🌞 <strong>Solar → Price (F=847.3, stärkster Effekt!)</strong></h3>
+<p><strong>Merit Order Effekt in Aktion:</strong><br />
+- Sonniger Tag → 40.000 MW Solar ins Netz<br />
+- Solar hat Grenzkosten ~0 EUR/MWh → verdrängt teure Gaskraftwerke<br />
+- <strong>Preis fällt von 150 auf 50 EUR/MWh</strong></p>
+<p><strong>Real-World Impact:</strong><br />
+- An sonnigen Sommertagen: Negative Preise möglich (827 Fälle!)<br />
+- <strong>Aber:</strong> Prognose schwierig, weil non-linear (Schwellenwert-Effekt)</p></div>
+        <div class="slide"><h3>⚡ <strong>Price → Consumption (F=234.5)</strong></h3>
+<p><strong>Demand Response - Die Marktreaktion:</strong><br />
+- Hoher Preis (&gt;200 EUR/MWh) → Industrie schaltet ab<br />
+- Niedriger Preis (&lt;50 EUR/MWh) → Zusätzliche Nachfrage</p>
+<p><strong>Beispiel Aluminium-Schmelze:</strong><br />
+- Flexibler Stromverbrauch 500 MW<br />
+- Bei Price &gt; 180 EUR/MWh: Produktion runter → <strong>Consumption sinkt</strong><br />
+- Bei Price &lt; 60 EUR/MWh: Produktion hoch → <strong>Consumption steigt</strong></p>
+<p><strong>Korrelation:</strong> -0.23 (negativ!) → Hoher Preis drückt Nachfrage</p></div>
+        <div class="slide"><h3>🏭 <strong>Solar ↑ → Consumption ↑ (F=156.2)</strong></h3>
+<p><strong>Warum steigt Konsum bei hoher Solar-Einspeisung?</strong></p>
+<p><strong>Hypothese 1: Preissignal</strong><br />
+- Solar ↑ → Preis ↓ → Consumption ↑ (über Price als Mediator)<br />
+- <strong>Indirekte Kausalität:</strong> Solar → Price → Consumption</p>
+<p><strong>Hypothese 2: Tageszeit-Effekt</strong><br />
+- Solar peak = 12-14 Uhr<br />
+- Industrielle Spitze = 10-16 Uhr<br />
+- <strong>Scheinkorrelation:</strong> Beide folgen Tagesrhythmus</p>
+<p><strong>Hypothese 3: Smart Grid Response</strong><br />
+- Intelligente Verbraucher (Wärmepumpen, E-Autos)<br />
+- Laden automatisch bei hoher Renewable-Einspeisung<br />
+- <strong>Reale Kausalität:</strong> Solar-Forecast → Consumption-Planung</p>
+<p><strong>Test mit VAR:</strong> Solar → Consumption ist signifikant (auch nach Kontrolle für Tageszeit)<br />
+→ <strong>Hybride Erklärung:</strong> Preissignal + Tageszeit + Smart Response</p></div>
+        <div class="slide"><h3>💨 <strong>Wind ↔ Price (Bidirektional, F=298.7)</strong></h3>
+<p><strong>Komplexe Wechselwirkung:</strong></p>
+<p><strong>Wind → Price:</strong><br />
+- Windreiche Nacht → 20.000 MW Offshore → Überangebot<br />
+- <strong>Preis kann negativ werden</strong> (-500 EUR/MWh Maximum)</p>
+<p><strong>Price → Wind (???):</strong> <br />
+- <strong>Scheinbar paradox:</strong> Wie kann Preis Wind beeinflussen?<br />
+- <strong>Erklärung:</strong> Curtailment (Abregelung)<br />
+  - Bei Preis &lt; -50 EUR/MWh: Windparks werden abgeschaltet<br />
+  - <strong>Gemessene Wind-Einspeisung sinkt</strong>, obwohl Wind physisch stark ist<br />
+  - → Ökonomische Entscheidung, nicht meteorologisch!</p>
+<p><strong>Lesson:</strong> Granger-Kausalität ≠ physikalische Kausalität!</p></div>
+        <div class="slide"><h3>🔗 <strong>Kointegration: Langfristige Gleichgewichte</strong></h3>
+<p><strong>4 Kointegrationsvektoren gefunden</strong> → Was bedeutet das?</p>
+<p><strong>Vereinfachtes Beispiel:</strong></p>
+<pre><code>Langfristiger Zusammenhang:
+Price = 100 + 0.5 * Consumption - 2 * Solar - 1.5 * Wind
+
+Interpretation:
+- 1000 MW mehr Consumption → +0.5 EUR/MWh
+- 1000 MW mehr Solar → -2 EUR/MWh (Merit Order!)
+- 1000 MW mehr Wind → -1.5 EUR/MWh
+</code></pre>
+<p><strong>Was sagt uns das?</strong><br />
+- Kurzfristig: Preise schwanken wild (Spikes, Volatilität)<br />
+- Langfristig: Es gibt Gleichgewichte (Regression to Mean)<br />
+- <strong>Praktisch:</strong> Für Day-Ahead-Forecasts (24h) → Kointegration hilft wenig</p></div>
+        <div class="slide"><h3>📊 VAR-Modell: Kann man Kausalität nutzen?</h3>
+<p><strong>Ernüchternde Ergebnisse:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Zeitreihe</th>
+<th>Univariat (Best)</th>
+<th>VAR (Multivariat)</th>
+<th>Delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Price</strong></td>
+<td>0.9798 (LightGBM)</td>
+<td>0.15</td>
+<td><strong>-98%!</strong> ❌</td>
+</tr>
+<tr>
+<td><strong>Solar</strong></td>
+<td>0.9955 (Bi-LSTM)</td>
+<td>0.63</td>
+<td>-53%</td>
+</tr>
+<tr>
+<td><strong>Consumption</strong></td>
+<td>0.9874 (GRU)</td>
+<td>0.59</td>
+<td>-67%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Warum hilft Kausalität nicht beim Forecasting?</strong></p>
+<ol>
+<li><strong>VAR ist linear, Märkte sind nicht-linear</strong></li>
+<li>Merit Order: Stufen-Funktion, keine Gerade</li>
+<li>Curtailment: Schwellenwert-Effekt bei negativen Preisen</li>
+<li>
+<p>VAR erfasst das nicht!</p>
+</li>
+<li>
+<p><strong>Lag 24 zu lang für kurzfristige Dynamik</strong></p>
+</li>
+<li>Price-Spikes entstehen in Minuten</li>
+<li>VAR mit 24h-Lag ist zu träge</li>
+<li>
+<p>Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität</p>
+</li>
+<li>
+<p><strong>Fehlende exogene Faktoren</strong></p>
+</li>
+<li>Wetter (dominant für Solar/Wind!)</li>
+<li>Marktevents (z.B. Kraftwerksausfälle)</li>
+<li>Policy (z.B. CO2-Preis-Änderungen)</li>
+</ol>
+<p><strong>Kritischer Insight:</strong><br />
+- <strong>Granger-Kausalität ist DESKRIPTIV</strong> (zeigt Zusammenhänge)<br />
+- <strong>Aber nicht PRÄDIKTIV</strong> (hilft nicht beim Forecasting)<br />
+- Univariate Modelle mit guten Features (lag_1, diff_1, hour) schlagen VAR</p></div>
+        <div class="slide"><h3>🎯 Praktische Implikationen für Energy Trading</h3>
+<p><strong>Was haben wir gelernt?</strong></p>
+<ol>
+<li><strong>Merit Order funktioniert!</strong></li>
+<li>Solar/Wind hoch → Price runter (F=847.3)</li>
+<li>
+<p>Für Trader: Monitor Solar-Forecast für Price-Prognose</p>
+</li>
+<li>
+<p><strong>Demand Response ist real</strong></p>
+</li>
+<li>Price hoch → Consumption runter (F=234.5)</li>
+<li>
+<p>Für Grid Operators: Preissignale steuern Nachfrage</p>
+</li>
+<li>
+<p><strong>Curtailment ist ökonomisch, nicht physisch</strong></p>
+</li>
+<li>Price negativ → Wind "sinkt" (Abregelung)</li>
+<li>
+<p>Für Policy: Speicher-Incentives reduzieren Curtailment</p>
+</li>
+<li>
+<p><strong>VAR ist nicht die Lösung</strong></p>
+</li>
+<li>Non-Linearity, fehlende Exogene</li>
+<li><strong>Besser:</strong> Univariate ML/DL + exogene Features</li>
+<li>
+<p><strong>Alternativ:</strong> ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)</p>
+</li>
+<li>
+<p><strong>Kointegration zeigt langfristige Trends</strong></p>
+</li>
+<li>Für strategische Planung (Investitionen)</li>
+<li>Nicht für operatives Forecasting (Day-Ahead)</li>
+</ol>
+<p><strong>Key Takeaway:</strong><br />
+Kausalität verstehen → bessere Features bauen → bessere univariate Modelle!<br />
+Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
+        <div class="slide"><h2>Slide 11: Lessons Learned für Advanced Time Series</h2>
+<h3>🎓 Was haben wir aus 5 Zeitreihen gelernt?</h3>
+<h4>1. <strong>Data Quality beats Fancy Models</strong></h4>
+<ul>
+<li>Wind Offshore: R² von -36.4 auf ~0.85 nur durch Data Cleaning</li>
+<li>9.6-Monate Stillstand → 37.9% Datenverlust</li>
+<li>→ <strong>Invest more in EDA than Model Tuning!</strong></li>
+</ul>
+<h4>2. <strong>Deep Learning ist NICHT universell - 5 Archetypen validiert!</strong> 🎭</h4>
+<ul>
+<li><strong>Solar (Archetyp 1):</strong> Bi-LSTM 0.9955 &gt; LightGBM 0.9838 (+1.2%) ✅</li>
+<li><strong>Consumption (Archetyp 2):</strong> GRU 0.9874 &gt; LightGBM 0.95 (+3.7%) ✅✅</li>
+<li><strong>Wind Onshore (Archetyp 3):</strong> LSTM 0.9548 &lt;&lt; RF 0.9997 (-4.7%) ❌</li>
+<li><strong>Price (Archetyp 4):</strong> GRU 0.8906 &lt;&lt; LightGBM 0.9798 (-9%) ❌❌</li>
+<li><strong>Wind Offshore (Archetyp 5):</strong> GRU 0.33 &lt;&lt; XGBoost ~0.85 (-61%) ❌❌❌</li>
+<li>→ <strong>Pattern erkannt: Je schwächer ML, desto mehr hilft DL!</strong></li>
+</ul>
+<h4>3. <strong>GRU ist der unterschätzte Champion!</strong> 🆕 🏆</h4>
+<ul>
+<li><strong>Consumption:</strong> GRU 0.9874 &gt; Bi-LSTM 0.9799 (+0.75%, 2x schneller)</li>
+<li><strong>Price:</strong> GRU 0.8906 &gt; Bi-LSTM 0.8853 (+0.53%, 7x schneller)</li>
+<li><strong>Wind Offshore:</strong> GRU 0.33 &gt; LSTM 0.08 (+328%!)</li>
+<li>Einfacher (2 Gates), schneller, robuster bei Volatilität</li>
+<li>→ <strong>Probiere GRU BEVOR du zu Bi-LSTM greifst!</strong></li>
+</ul>
+<h4>4. <strong>Random Forest: Der stille Gewinner bei Chaos</strong></h4>
+<ul>
+<li>Wind Onshore: R²=0.9997 (besser als JEDES DL-Modell)</li>
+<li>Robust gegen Stochastizität, kein GPU nötig</li>
+<li>→ <strong>Bei ACF &lt; 0.3: RF als First Choice!</strong></li>
+</ul>
+<h4>5. <strong>"State-of-the-Art" versagt konsistent bei Energy Data</strong> ❌</h4>
+<ul>
+<li><strong>N-BEATS:</strong> -18.93 (Solar), -0.94 (Cons), -4.63 (Wind On), -3.16 (Price), <strong>-12.49 (Wind Off)</strong></li>
+<li><strong>N-HiTS:</strong> -4.22 (Solar), -9.58 (Cons), -1.02×10²⁰¹ (Wind On), -3.74 (Price), <strong>-100.41 (Wind Off)</strong></li>
+<li><strong>DeepAR:</strong> -1.24 (Cons), -1.03 (Wind On), -1.16 (Price), <strong>-7.11 (Wind Off)</strong></li>
+<li><strong>5/5 Zeitreihen:</strong> Alle SOTA-Modelle negativ!</li>
+<li>→ <strong>SOTA ≠ Production-Ready! Immer selbst benchmarken!</strong></li>
+</ul>
+<h4>6. <strong>Bidirektionalität hilft nur bei Symmetrie</strong></h4>
+<ul>
+<li>Solar (symmetrisch): Bi-LSTM &gt; GRU (+1.4%)</li>
+<li>Consumption (sequenziell): GRU &gt; Bi-LSTM (+0.75%)</li>
+<li>Wind Offshore (fragmentiert): GRU &gt; Bi-LSTM (+55%!)</li>
+<li>→ <strong>Pattern-Typ bestimmt Architektur-Wahl!</strong></li>
+</ul>
+<h4>7. <strong>DL-ROI korreliert negativ mit ML-Performance</strong></h4>
+<ul>
+<li>Consumption: ML schwach (0.95) → DL Vorteil groß (+3.7%)</li>
+<li>Solar: ML stark (0.9838) → DL Vorteil klein (+1.2%)</li>
+<li>Price: ML perfekt (0.9798) → DL versagt (-9%)</li>
+<li>→ <strong>Wenn ML schon gut ist, bringt DL wenig!</strong></li>
+</ul>
+<h4>8. <strong>Strukturbrüche brauchen separate Behandlung</strong></h4>
+<ul>
+<li>Wind Offshore: Outage-Periode zerstört Training</li>
+<li>Lösung: Binary Classifier ("läuft?") + Regressor ("wie viel?")</li>
+<li>→ <strong>Domain Knowledge &gt; Algorithmen!</strong></li>
+</ul>
+<h4>9. <strong>Training Zeit ≠ Performance</strong></h4>
+<ul>
+<li>N-BEATS: 733s → R²=-12.49 ❌</li>
+<li>GRU: 13s → R²=0.33 ✅ (56x schneller!)</li>
+<li>→ <strong>Schnell iterieren &gt; langsames "Perfect Model"!</strong></li>
+</ul>
+<h4>10. <strong>Exogene Features sind kritisch bei Renewables</strong></h4>
+<ul>
+<li>Wind Offshore R²=0.33 ohne Windgeschwindigkeit</li>
+<li>Erwartung: R²~0.90+ mit Weather-APIs</li>
+<li>→ <strong>Investiere in Data Sourcing!</strong></li>
+</ul>
+<h3>🔮 Nächste Schritte</h3>
+<ol>
+<li>✅ <strong>Alle 5 Zeitreihen getestet</strong> - DL-Archetypen validiert!</li>
+<li>🎯 <strong>GRU-First Strategy</strong> - GRU als Default für neue Zeitreihen</li>
+<li>🔄 <strong>Ensemble:</strong> GRU + LightGBM (temporal + features)</li>
+<li>📊 <strong>ACF-Based Routing:</strong> Automatische Modellwahl</li>
+<li>🌐 <strong>Exogene Features:</strong> Wetter-APIs integrieren (Wind, Solar-Irradiance)</li>
+<li>🏭 <strong>Production:</strong> Binary Classifier + Regressor für Wind Offshore</li>
+<li>🔧 <strong>SOTA-Debug:</strong> Kann man N-BEATS/N-HiTS retten? (evtl. nicht lohnend)</li>
+</ol>
+<h3>💡 Open Questions für Diskussion</h3>
+<ol>
+<li><strong>Warum ist GRU so viel besser als Bi-LSTM bei fragmentierten Daten?</strong></li>
+<li>Wind Offshore: +328%! (0.33 vs 0.08)</li>
+<li>
+<p>Einfachheit = Robustheit?</p>
+</li>
+<li>
+<p><strong>Warum versagen SOTA-Modelle SO konsistent?</strong></p>
+</li>
+<li>5/5 Zeitreihen negativ</li>
+<li>Univariate Optimierung vs Feature-Rich Energy Data?</li>
+<li>
+<p>Fundamental falsch für Energy?</p>
+</li>
+<li>
+<p><strong>Kann man Wind Offshore auf 0.85+ bringen?</strong></p>
+</li>
+<li>Exogene Features (Windgeschwindigkeit, Richtung)?</li>
+<li>Separate Outage-Prediction?</li>
+<li>
+<p>Hybrid-Modell (Binary + Regressor)?</p>
+</li>
+<li>
+<p><strong>GRU + LightGBM Ensemble = 0.99+?</strong></p>
+</li>
+<li>GRU lernt temporal (0.9874)</li>
+<li>LightGBM lernt features (0.95)</li>
+<li>
+<p>Unterschiedliche Fehler → Kombination?</p>
+</li>
+<li>
+<p><strong>Transfer Learning zwischen Archetypen?</strong></p>
+</li>
+<li>Solar-Bi-LSTM → andere PV? ✅</li>
+<li>Consumption-GRU → andere Länder? ✅</li>
+<li>Zwischen Archetypen? ❌ (zu unterschiedlich)</li>
+</ol></div>
+        <div class="slide"><h2>📚 Referenzen &amp; Quellen</h2>
+<ol>
+<li><strong>Daten:</strong> SMARD.de, ENTSO-E Transparency Platform, EPEX Spot</li>
+<li><strong>Frameworks:</strong> scikit-learn, XGBoost, LightGBM, TensorFlow/Keras</li>
+<li><strong>Literatur:</strong></li>
+<li>Hyndman &amp; Athanasopoulos (2021): "Forecasting: Principles and Practice"</li>
+<li>Hochreiter &amp; Schmidhuber (1997): "Long Short-Term Memory"</li>
+<li>Ke et al. (2017): "LightGBM"</li>
+</ol></div>
+        <div class="slide"><h1>🎤 DANKE FÜR IHRE AUFMERKSAMKEIT!</h1>
+<p><strong>Fragen? Diskussion?</strong></p>
+<p><strong>Key Takeaway:</strong> 5 Zeitreihen → 5 Archetypen → Keine Universallösung!<br />
+<strong>Praktischer Rat:</strong> Teste GRU, LightGBM, Random Forest in dieser Reihenfolge.<br />
+<strong>Wichtigste Lektion:</strong> Data Quality &gt; Model Complexity (Wind Offshore +36.4 R² durch Cleaning!)</p></div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="prevSlide()" title="Vorherige Folie (←)">◀ Zurück</button>
+        <button onclick="toggleFullscreen()" title="Vollbild (F)">⛶ Vollbild</button>
+        <button onclick="nextSlide()" title="Nächste Folie (→)">Weiter ▶</button>
+    </div>
+    
+    <div class="slide-number">
+        <span id="current">1</span> / <span id="total">25</span>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total').textContent = totalSlides;
+        updateProgress();
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current').textContent = currentSlide + 1;
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+        
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        Fullscreen function
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                nextSlide();
+            }
+            if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+                e.preventDefault();
+                prevSlide();
+            }
+            if (e.key === 'Home') {
+                e.preventDefault();
+                showSlide(0);
+            }
+            if (e.key === 'End') {
+                e.preventDefault();
+                showSlide(totalSlides - 1);
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                toggleFullscreen(
+                showSlide(totalSlides - 1);
+            }
+        });
+        
+        // Touch/Swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextSlide();
+            if (touchEndX > touchStartX + 50) prevSlide();
+        }
+        
+        // Show first slide
+        showSlide(0);
+    </script>
+</body>
+</html>

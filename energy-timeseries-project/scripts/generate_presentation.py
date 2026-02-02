@@ -184,7 +184,7 @@ backgroundColor: #fff
     def generate_standalone_html(self) -> Path:
         """
         Generiert einfache HTML-Präsentation mit Custom CSS
-        (Keine externe Dependencies, aber weniger Features)
+        Nutzt Python markdown für korrektes Rendering
         
         Returns:
             Path zur generierten HTML-Datei
@@ -200,19 +200,41 @@ backgroundColor: #fff
         # Teile nach "---" für Slides
         slides = content.split('\n---\n')
         
-        # Konvertiere Markdown zu HTML (sehr simpel)
-        import html as html_module
-        slides_html = ""
-        for i, slide in enumerate(slides):
-            slide_content = html_module.escape(slide)
-            # Sehr einfache Markdown-zu-HTML Konvertierung
-            slide_content = slide_content.replace('\n\n', '</p><p>')
-            slide_content = slide_content.replace('\n### ', '<h3>')
-            slide_content = slide_content.replace('\n## ', '<h2>')
-            slide_content = slide_content.replace('\n# ', '<h1>')
-            slide_content = slide_content.replace('**', '</strong>').replace('**', '<strong>')
-            slide_content = f'<div class="slide"><p>{slide_content}</p></div>\n'
-            slides_html += slide_content
+        # Versuche markdown-Library zu nutzen
+        try:
+            import markdown
+            from markdown.extensions.tables import TableExtension
+            from markdown.extensions.fenced_code import FencedCodeExtension
+            from markdown.extensions.codehilite import CodeHiliteExtension
+            
+            md = markdown.Markdown(extensions=[
+                'tables',
+                'fenced_code',
+                'codehilite',
+                'nl2br'
+            ])
+            
+            slides_html = ""
+            for i, slide in enumerate(slides):
+                # Konvertiere Markdown zu HTML
+                slide_html = md.convert(slide)
+                md.reset()  # Reset für nächste Slide
+                slides_html += f'<div class="slide">{slide_html}</div>\n'
+        
+        except ImportError:
+            # Fallback auf einfache Konvertierung
+            print("⚠️  markdown library nicht gefunden, nutze einfache Konvertierung")
+            import html as html_module
+            slides_html = ""
+            for i, slide in enumerate(slides):
+                slide_content = html_module.escape(slide)
+                # Einfache Markdown-zu-HTML Konvertierung
+                slide_content = slide_content.replace('\n\n', '</p><p>')
+                slide_content = slide_content.replace('\n### ', '<h3>')
+                slide_content = slide_content.replace('\n## ', '<h2>')
+                slide_content = slide_content.replace('\n# ', '<h1>')
+                slide_content = f'<div class="slide"><p>{slide_content}</p></div>\n'
+                slides_html += slide_content
         
         # HTML Template - verwende String-Konkatenation statt .format()
         html_output = """<!DOCTYPE html>
@@ -276,6 +298,7 @@ backgroundColor: #fff
             padding: 2px 6px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
+            font-size: 0.9em;
         }
         .slide pre {
             background: #2d2d2d;
@@ -284,16 +307,41 @@ backgroundColor: #fff
             border-radius: 8px;
             overflow-x: auto;
             margin: 20px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
         }
         .slide pre code {
             background: none;
             color: inherit;
+            padding: 0;
         }
         .slide ul, .slide ol {
             margin-left: 40px;
             line-height: 1.8;
+            margin-bottom: 15px;
         }
-        .slide strong { color: #764ba2; }
+        .slide li {
+            margin-bottom: 8px;
+        }
+        .slide strong { 
+            color: #764ba2; 
+            font-weight: 600;
+        }
+        .slide em {
+            color: #667eea;
+            font-style: italic;
+        }
+        .slide blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #555;
+            font-style: italic;
+        }
+        .slide p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
         .slide img {
             max-width: 100%;
             height: auto;
