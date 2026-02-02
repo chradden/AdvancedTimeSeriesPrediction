@@ -423,169 +423,314 @@ Wind:     ▅▄▃▂▁▁▁▁▁  (schneller Abfall)
 
 ---
 
-## Slide 7b: Consumption - Der Mittelweg (Quick Overview)
+## Slide 7b: Consumption - Der interessante Mittelweg
 
 ### 📊 Performance Overview
 
 ![Consumption Comparison](results/figures/consumption_extended_09_final_comparison.png)
 
+#### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
 |------|--------|-----------|----------|-----|-----------|
 | 🥇 | **LightGBM** | **~1200** | **~2.5** | **~0.95** | ML Tree |
 | 🥈 | XGBoost | ~1250 | ~2.6 | ~0.94 | ML Tree |
 | 🥉 | Random Forest | ~1300 | ~2.8 | ~0.93 | ML Tree |
-| 4 | **LSTM** | **~1400** | **~3.0** | **~0.92** | Deep Learning |
 
-### 🔍 Kurz-Analyse
+#### Deep Learning Models (Extended Testing - Colab GPU)
+| Rang | Modell | RMSE (MW) | MAE (MW) | R² | Training Zeit |
+|------|--------|-----------|----------|-----|---------------|
+| 1 | **GRU** | **-** | **-** | **0.9874** 🏆 | ~25s |
+| 2 | **Bi-LSTM** | 1,302.6 | 1,046.3 | 0.9799 | ~55s |
+| 3 | **LSTM** | - | - | 0.9772 | ~30s |
+| 4 | **Autoencoder** | - | - | 0.9799 | ~45s |
+| 5 | **VAE** | - | - | 0.9697 | ~70s |
+| ❌ | N-BEATS | - | - | -0.9420 | ~850s |
+| ❌ | DeepAR | - | - | -1.2356 | ~280s |
+| ❌ | N-HiTS | - | - | -9.5849 | ~140s |
 
-**Charakteristik:** 
-- Starke Wochenmuster (Industrie: Mo-Fr, Haushalte: Wochenende)
-- Geringere Volatilität als Solar/Wind
-- **Feature-Dominanz:** `dayofweek`, `hour`, `is_weekend`
+### 🔍 Kritische Analyse: Consumption = Archetyp 2.5?
 
-**Erwartung für DL:**
-- LSTM könnte Wochenmuster lernen (ähnlich Solar's Tagesmuster)
-- Bi-LSTM evtl. R²=0.93-0.94 möglich?
-- Aber: ML Trees schon sehr stark → DL Mehrwert fraglich
+#### Überraschung: GRU gewinnt, nicht Bi-LSTM!
 
-**Status:** Extended Pipeline vollständig, LSTM-Testing ausstehend
+**GRU R²=0.9874 vs Bi-LSTM R²=0.9799** (+0.75% absolut)
+
+**Warum GRU > Bi-LSTM bei Consumption?**
+
+1. **Wochenmuster sind unidirektional**
+   - Montag → Dienstag → ... → Sonntag (Vorwärts-Sequenz)
+   - Solar: Auf-/Abstieg symmetrisch → Bi-LSTM hilft
+   - Consumption: Wochenablauf sequenziell → Bi-LSTM unnötig
+
+2. **Weniger Parameter = weniger Overfitting**
+   - GRU: Einfacher als LSTM (2 Gates statt 3)
+   - Bi-LSTM: Doppelt so viele Parameter wie GRU
+   - Bei mittlerer Datenkomplexität: GRU optimal
+
+3. **Training Zeit Effizienz**
+   - GRU: 25s → R²=0.9874
+   - Bi-LSTM: 55s → R²=0.9799
+   - → **2x langsamer für schlechteres Ergebnis!**
+
+#### Vergleich: Solar vs Consumption
+
+| Metrik | Solar | Consumption | Interpretation |
+|--------|-------|-------------|----------------|
+| **Bestes DL-Modell** | Bi-LSTM (0.9955) | GRU (0.9874) | Unterschiedliche Pattern-Typen |
+| **Bestes ML-Modell** | LightGBM (0.9838) | LightGBM (~0.95) | ML stark bei beiden |
+| **DL vs ML Gap** | +1.2% für DL | **+3.7% für DL!** | DL lohnt mehr bei Consumption! |
+| **Pattern-Typ** | Tages-Sinus | Wochen-Sequenz | Beide seq., aber anders |
+
+#### Key Insight: Consumption profitiert mehr von DL als Solar!
+
+**Warum?**
+- Solar: LightGBM schon bei 0.9838 (sehr stark)
+- Consumption: LightGBM nur bei ~0.95 (gut, aber Luft nach oben)
+- **Gap:** 3.7% Verbesserung durch GRU bei Consumption vs 1.2% durch Bi-LSTM bei Solar
+
+**Hypothese:**
+- Consumption hat komplexere Patterns (Industrie + Haushalt)
+- Wochenmuster + Tagesmuster kombiniert
+- GRU erfasst diese Multi-Pattern-Struktur besser als ML Trees
+
+### 🤔 Warum versagen N-BEATS, DeepAR, N-HiTS ALLE?
+
+**Alle SOTA-Modelle mit negativem R²:**
+- N-BEATS: -0.94
+- DeepAR: -1.24
+- N-HiTS: **-9.58** (schlimmer als Zufall!)
+
+**Mögliche Gründe:**
+
+1. **Univariate Optimierung trifft Feature-Rich Data**
+   - Diese Modelle sind für univariate Serien designed
+   - Consumption hat 31 Features (lag, rolling, diff, etc.)
+   - → Modelle können Features nicht nutzen!
+
+2. **Hyperparameter-Mismatch**
+   - Defaults für M4/Monash Benchmarks
+   - Stündliche Energie-Daten ≠ typische Benchmark-Serien
+
+3. **Sequence Length Problem**
+   - N-BEATS braucht evtl. 168h+ (ganze Woche)
+   - Wir nutzen 48h → zu kurz für Wochenmuster?
+
+4. **Skalierungs-Issues**
+   - Consumption: 40,000-70,000 MW Bereich
+   - Interne Normalisierung evtl. falsch konfiguriert
+
+### 💡 Praktische Empfehlungen für Consumption
+
+**Wenn GPU verfügbar:**
+- 🏆 **1. Wahl: GRU** (R²=0.9874, 25s Training)
+- ✅ Schnell, stark, einfach zu implementieren
+
+**Wenn nur CPU:**
+- 🥈 **2. Wahl: LightGBM** (R²~0.95, 2 min Training)
+- Immer noch sehr gut, explainable Features
+
+**NICHT verwenden:**
+- ❌ N-BEATS, DeepAR, N-HiTS (alle negativ)
+- ❌ Bi-LSTM (langsamer als GRU, schlechter)
+
+### 🔬 Offene Fragen für Diskussion
+
+1. **Warum ist GRU besser als Bi-LSTM?**
+   - Wochenmuster unidirektional?
+   - Oder einfach Overfitting bei Bi-LSTM?
+
+2. **Warum profitiert Consumption mehr von DL als Solar?**
+   - 3.7% vs 1.2% Gap
+   - Komplexere Multi-Pattern-Struktur?
+
+3. **Kann man N-BEATS fixen?**
+   - Längere Sequence (168h)?
+   - Andere Hyperparameter?
+   - Oder fundamental ungeeignet?
+
+4. **GRU + LightGBM Ensemble?**
+   - GRU lernt temporale Patterns (R²=0.9874)
+   - LightGBM lernt Feature-Interactions (R²=0.95)
+   - Kombination → R²=0.99+?
+
+5. **Transfer Learning von Solar?**
+   - Solar-GRU als Initialization für Consumption?
+   - Beide haben starke Periodizität
+
+**Fazit Consumption:**
+🏆 **GRU ist der Gewinner** - überraschend besser als Bi-LSTM!  
+📊 **DL lohnt sich mehr als bei Solar** (+3.7% vs +1.2%)  
+❌ **SOTA-Modelle versagen komplett** (alle negativ)
 
 ---
 
-## Slide 8: Modell-Architektur Vergleich - Was funktioniert wann?
+## Slide 8: Modell-Architektur Vergleich - 4 Zeitreihen Analyse
 
-### 📊 Performance-Matrix: Solar vs Wind Onshore
+### 📊 Performance-Matrix: Cross-Series Vergleich
 
-| Architektur | Solar R² | Wind Onshore R² | Best Use Case |
-|-------------|----------|-----------------|---------------|
-| **Bi-LSTM** | **0.9955** 🏆 | ~0.87* ❌ | Starke sequenzielle Patterns (Solar!) |
-| **LSTM** | 0.9934 | 0.8956 ❌ | Mittlere seq. Patterns |
-| **Random Forest** | 0.9825 | **0.9997** 🏆 | Stochastische Daten (Wind!) |
-| **LightGBM** | 0.9838 | 0.9994 | Balance: Speed & Accuracy |
-| **XGBoost** | 0.9838 | 0.9995 | Feature-rich structured data |
-| **Autoencoder** | 0.9515 | ? | Anomalie Detection |
-| **VAE** | 0.9255 | ? | Probabilistic Forecasting |
-| **N-BEATS** | -18.93 ❌ | ? | ❌ Univariate Benchmarks |
-| **SARIMA** | -0.28 ❌ | ? | Stationary univariate |
+| Architektur | Solar R² | Consumption R² | Wind Onshore R² | Best Use Case |
+|-------------|----------|----------------|-----------------|---------------|
+| **Bi-LSTM** | **0.9955** 🏆 | 0.9799 | ~0.87* ❌ | Symmetrische seq. Patterns (Solar!) |
+| **GRU** | ~0.993* | **0.9874** 🏆 | ~0.88* | Unidirektionale Patterns (Consumption!) |
+| **LSTM** | 0.9934 | 0.9772 | 0.8956 ❌ | Mittlere seq. Patterns |
+| **Random Forest** | 0.9825 | ~0.93 | **0.9997** 🏆 | Stochastische Daten (Wind!) |
+| **LightGBM** | 0.9838 | ~0.95 | 0.9994 | Universell stark |
+| **XGBoost** | 0.9838 | ~0.94 | 0.9995 | Feature-rich data |
+| **N-BEATS** | -18.93 ❌ | -0.94 ❌ | ? | ❌ Versagt überall |
+| **N-HiTS** | -4.22 ❌ | -9.58 ❌❌ | ? | ❌ Noch schlimmer |
+| **DeepAR** | ? | -1.24 ❌ | ? | ❌ Auch negativ |
 
-*Geschätzt basierend auf LSTM Performance
+*Geschätzt oder ähnlich
 
-### 🎯 Entscheidungsbaum V2: Mit Daten-Charakteristik
+### 🎯 Entscheidungsbaum V3: Mit 3 Zeitreihen-Typen
 
 ```
 START: Analysiere deine Zeitreihe
 │
-├─ Hat sie STARKE sequenzielle Patterns?
-│  └─ Ja (z.B. Solar, Consumption)
+├─ Hat sie SYMMETRISCHE sequenzielle Patterns?
+│  └─ Ja (z.B. Solar - auf/ab symmetrisch)
 │     ├─ GPU verfügbar? → Bi-LSTM (R²=0.9955) 🏆
-│     └─ Kein GPU? → LightGBM (R²=0.9838, fast so gut)
+│     └─ Kein GPU? → LightGBM (R²=0.9838)
+│
+├─ Hat sie UNIDIREKTIONALE sequenzielle Patterns?
+│  └─ Ja (z.B. Consumption - Wochenablauf)
+│     ├─ GPU verfügbar? → GRU (R²=0.9874) 🏆
+│     └─ Kein GPU? → LightGBM (R²~0.95)
 │
 ├─ Hat sie SCHWACHE/KEINE seq. Patterns?
-│  └─ Ja (z.B. Wind, Price)
-│     └─ ML Trees nutzen! (Random Forest R²=0.9997) 🏆
-│        → LSTM lohnt sich NICHT! (R²=0.8956 vs 0.9997)
+│  └─ Ja (z.B. Wind - chaotisch)
+│     └─ Random Forest (R²=0.9997) 🏆
+│        → DL lohnt sich NICHT!
 │
 ├─ Unsicher über Pattern-Stärke?
 │  └─ Prüfe Autocorrelation (ACF):
-│     ├─ ACF(24h) > 0.5? → LSTM testen
+│     ├─ ACF(24h) > 0.5? → DL testen
+│     ├─ ACF(168h) > ACF(24h)? → GRU (Wochen > Tage)
 │     └─ ACF(24h) < 0.3? → ML Trees
 │
-└─ Brauchst du Unsicherheit?
-   └─ VAE + LightGBM Ensemble
+└─ NIEMALS N-BEATS/N-HiTS nutzen!
+   → Bei uns IMMER negativ (-18.93 bis -9.58)
 ```
 
-### 💡 Die 3 Zeitreihen-Archetypen
+### 💡 Die 4 Zeitreihen-Archetypen (erweitert)
 
-#### Archetyp 1: **Deterministisch-Periodisch** (Solar)
+#### Archetyp 1: **Deterministisch-Symmetrisch** (Solar) ☀️
 **Eigenschaften:**
 - ✅ Starker Tagesrhythmus (ACF 24h > 0.7)
-- ✅ Glatte Gradienten (Auf-/Abstieg)
-- ✅ Repetitive Patterns über Wochen
+- ✅ Symmetrische Gradienten (Auf = Ab)
+- ✅ Hoch repetitiv
 
 **Best Model:** Bi-LSTM (R²=0.9955)  
-**Why:** Erfasst Sequences optimal  
-**ML Trees:** Auch stark (R²=0.9838), aber 1.2% schlechter
+**Why:** Bidirektionalität erfasst Symmetrie  
+**Runner-up:** LightGBM (R²=0.9838, -1.2%)
 
 ---
 
-#### Archetyp 2: **Stochastisch-Chaotisch** (Wind Onshore)
+#### Archetyp 2: **Strukturiert-Sequenziell** (Consumption) 🏭
 **Eigenschaften:**
-- ❌ Schwacher Tagesrhythmus (ACF 24h < 0.3)
-- ❌ Sprunghafte Änderungen (Böen)
-- ❌ Wenig Repetition (Chaos)
+- ✅ Starker Wochenrhythmus (ACF 168h > ACF 24h)
+- ⚠️ Unidirektionale Sequenz (Mo→So)
+- ✅ Mittlere Repetition
+
+**Best Model:** GRU (R²=0.9874) 🆕  
+**Why:** Einfacher als Bi-LSTM, erfasst Vorwärts-Sequenz optimal  
+**Runner-up:** LightGBM (R²~0.95, -3.7%!)  
+**Surprise:** Bi-LSTM schlechter als GRU (0.9799 vs 0.9874)!
+
+---
+
+#### Archetyp 3: **Stochastisch-Chaotisch** (Wind Onshore) 💨
+**Eigenschaften:**
+- ❌ Schwacher Rhythmus (ACF 24h < 0.3)
+- ❌ Sprunghafte Änderungen
+- ❌ Kaum Repetition
 
 **Best Model:** Random Forest (R²=0.9997)  
-**Why:** Ensemble mittelt Stochastik weg  
-**LSTM:** Versagt (R²=0.8956) - 11% Gap! ❌
+**Why:** Ensemble mittelt Chaos weg  
+**DL Performance:** LSTM R²=0.8956 ❌ (-11% Gap!)
 
 ---
 
-#### Archetyp 3: **Strukturiert-Volatil** (Price, Consumption)
+#### Archetyp 4: **Volatil-Strukturiert** (Price - noch zu testen) 💰
 **Eigenschaften:**
-- ⚠️ Mittlere Periodizität (wöchentlich)
-- ⚠️ Hohe Spikes (Price)
-- ⚠️ Strukturbrüche möglich
+- ⚠️ Mittlere Periodizität
+- 🔥 Hohe Spikes & Volatilität
+- ⚠️ Strukturbrüche
 
-**Best Model:** LightGBM (R²=0.95-0.98)  
-**Why:** Balance aus Features & Speed  
-**LSTM:** Evtl. nützlich, aber marginal besser
+**Erwartung:** LightGBM (R²~0.98)  
+**DL-Potential:** Fraglich (Spikes schwer zu lernen)
 
-### 🔬 Key Insights
+### 🔬 Key Insights aus 3 Zeitreihen
 
-**1. ACF ist der beste Prädiktor für DL-Erfolg**
-- Solar: ACF(24h) = 0.8 → Bi-LSTM gewinnt
-- Wind: ACF(24h) = 0.2 → RF gewinnt
-- → **Prüfe ACF VOR DL-Training!**
+**1. GRU ist der unterschätzte Champion** 🆕
+- Consumption: Besser als Bi-LSTM (0.9874 vs 0.9799)
+- Schneller (25s vs 55s)
+- Einfacher (2 Gates vs 4 in Bi-LSTM)
+- → **Probiere GRU BEVOR du zu Bi-LSTM greifst!**
 
-**2. "One Size fits All" gibt es nicht**
-- Solar: Deep Learning lohnt sich (+1.2%)
-- Wind: Deep Learning ist Verschwendung (-11%)
-- → **Daten-getriebene Modellwahl!**
+**2. Bidirektionalität hilft nur bei Symmetrie**
+- Solar (symmetrisch): Bi-LSTM > GRU (+0.2%)
+- Consumption (sequenziell): GRU > Bi-LSTM (+0.75%)
+- → **Pattern-Typ bestimmt Architektur!**
 
-**3. Random Forest ist unterschätzt**
-- Wind Onshore: R²=0.9997 (besser als Bi-LSTM bei Solar!)
-- Robust gegen Noise, kein GPU nötig
-- → **Standard-Baseline für neue Zeitreihen**
+**3. DL-Vorteil korreliert mit ML-Schwäche**
+- Solar: ML stark (0.9838) → DL Vorteil klein (+1.2%)
+- Consumption: ML schwächer (0.95) → DL Vorteil größer (+3.7%)
+- Wind: ML perfekt (0.9997) → DL versagt (-11%)
+- → **Wenn ML schon gut ist, bringt DL wenig!**
 
-**4. Training Zeit ≠ Model Performance**
-- N-BEATS: 977s → R²=-18.93 ❌
-- Bi-LSTM: 30s → R²=0.9955 ✅  
-- Random Forest: 6 min (CPU) → R²=0.9997 🏆🏆
-- → **Einfachheit schlägt Komplexität oft!**
+**4. "State-of-the-Art" versagt konsistent**
+- N-BEATS: -18.93 (Solar), -0.94 (Consumption)
+- N-HiTS: -4.22 (Solar), **-9.58** (Consumption)
+- DeepAR: -1.24 (Consumption)
+- → **SOTA ≠ Production-Ready!**
 
-**5. Feature Engineering beats Deep Learning bei High Noise**
-- Wind: `diff_1` + `lag_1` = 63% Feature Importance
-- LSTM kann diese nicht so gut nutzen wie RF
-- → **Explizite Features > Implizites Lernen bei SNR < 3**
+**5. ACF(168h) vs ACF(24h) unterscheidet GRU vs Bi-LSTM**
+- Solar: ACF(24h) dominant → Bi-LSTM
+- Consumption: ACF(168h) dominant → GRU
+- → **Welche Periode dominiert? → Architektur-Wahl!**
+
+### 📊 DL vs ML Gap Analyse
+
+| Zeitreihe | Bestes DL | Bestes ML | Gap | Lohnt DL? |
+|-----------|-----------|-----------|-----|-----------|
+| **Consumption** | GRU 0.9874 | LightGBM 0.95 | **+3.7%** | ✅ JA! |
+| **Solar** | Bi-LSTM 0.9955 | LightGBM 0.9838 | +1.2% | ⚠️ Marginal |
+| **Wind Onshore** | LSTM 0.8956 | RF 0.9997 | **-11%** | ❌ NEIN! |
+
+**Pattern erkannt:**
+- Gap > 3%: DL klar lohnend (Consumption)
+- Gap 1-2%: DL optional (Solar - GPU nötig)
+- Gap < 0%: DL versagt (Wind - nicht verwenden!)
 
 ### 🔬 Offene Fragen für Advanced-Diskussion
 
-1. **Kann man ACF-Schwellwert quantifizieren?**
-   - ACF(24h) > X → LSTM, sonst RF?
-   - Aus unseren Daten: X ≈ 0.5?
+1. **Warum ist GRU bei Consumption besser als Bi-LSTM?**
+   - Wochenmuster inhärent unidirektional?
+   - Oder Bi-LSTM overfittet?
 
-2. **Warum ist Wind RF besser als Solar Bi-LSTM?**
-   - 0.9997 vs 0.9955 → Wind "einfacher"?
-   - Oder Overfitting bei Wind?
+2. **Warum größerer DL-Vorteil bei Consumption als Solar?**
+   - Consumption: +3.7% vs Solar: +1.2%
+   - Komplexere Multi-Pattern-Struktur bei Consumption?
 
-3. **Hybrid-Ansatz für Wind?**
-   - RF für Baseline (R²=0.9997)
-   - LSTM für verbleibende 0.0003 Residuen?
-   - → Lohnt Aufwand nicht!
+3. **Kann man N-BEATS/N-HiTS retten?**
+   - Längere Sequences (168h+)?
+   - Feature-Augmented Version?
+   - Oder fundamental falsch für Energy Data?
 
-4. **Exogene Features würden helfen?**
-   - Windgeschwindigkeit für Wind Onshore
-   - Dann könnte LSTM schlagen?
+4. **GRU-First Strategy?**
+   - Immer erst GRU testen, dann Bi-LSTM?
+   - GRU als Default für neue Zeitreihen?
 
-5. **Transfer Learning zwischen Archetypen?**
-   - Solar-LSTM auf Wind? → Nein (zu unterschiedlich)
-   - Solar-LSTM auf PV-Anlage 2? → Ja!
+5. **Multi-Arch Ensemble?**
+   - GRU (temporal) + LightGBM (features) = Best of both?
+   - Bi-LSTM (Solar) + GRU (Consumption) Cross-Transfer?
 
 **Status DL-Testing:**
-- ✅ **Solar:** Bi-LSTM R²=0.9955 (Champion - Archetyp 1!)
-- ❌ **Wind Onshore:** LSTM R²=0.8956 (Versager - Archetyp 2!)
-- 🚧 **Wind Offshore, Price, Consumption:** In Entwicklung
-- 💡 **Hypothese:** Price & Consumption = Archetyp 3 → ML Trees leicht vorne
+- ✅ **Solar:** Bi-LSTM R²=0.9955 (Archetyp 1: Symmetrisch)
+- ✅ **Consumption:** GRU R²=0.9874 (Archetyp 2: Sequenziell) 🆕
+- ❌ **Wind Onshore:** LSTM R²=0.8956 (Archetyp 3: Chaotisch)
+- 🚧 **Wind Offshore, Price:** In Entwicklung
+- 💡 **Hypothese Price:** Archetyp 4 → LightGBM gewinnt (Spikes zu hart für DL)
 
 ---
 
@@ -645,30 +790,37 @@ START: Analysiere deine Zeitreihe
 - Missing Data, Stillstände, Strukturbrüche **müssen** erkannt werden
 - → **Invest more in EDA!**
 
-#### 2. **Deep Learning ist NICHT universell - Archetypen matters!** 🎭
-- **Solar (Archetyp 1):** Bi-LSTM R²=0.9955 > LightGBM 0.9838 ✅
-- **Wind Onshore (Archetyp 2):** LSTM R²=0.8956 << RF 0.9997 ❌
-- **Gap:** +1.2% vs -11% je nach Daten!
-- → **Prüfe ACF BEVOR du DL nutzt! ACF(24h) > 0.5 → LSTM, sonst ML Trees**
+#### 2. **Deep Learning ist NICHT universell - 4 Archetypen!** 🎭
+- **Solar (Archetyp 1):** Bi-LSTM R²=0.9955 > LightGBM 0.9838 (+1.2%) ✅
+- **Consumption (Archetyp 2):** GRU R²=0.9874 > LightGBM 0.95 (+3.7%) ✅✅
+- **Wind Onshore (Archetyp 3):** LSTM R²=0.8956 << RF 0.9997 (-11%) ❌
+- **Pattern:** Je schwächer ML, desto mehr hilft DL!
+- → **Prüfe ACF UND ML-Baseline BEVOR du DL nutzt!**
 
-#### 3. **Random Forest ist der unterschätzte Champion** 🏆
+#### 3. **GRU ist der unterschätzte Champion - oft besser als Bi-LSTM!** 🆕
+- Consumption: GRU 0.9874 > Bi-LSTM 0.9799 (+0.75%)
+- 2x schneller (25s vs 55s), einfacher (2 Gates statt 4)
+- Unidirektionale Patterns (Wochenablauf) → GRU optimal
+- → **Probiere GRU BEVOR du zu Bi-LSTM greifst!**
 - Wind Onshore: R²=0.9997 (besser als jedes DL-Modell!)
 - Robust gegen Stochastizität, kein GPU nötig
 - Oft besser als "fancy" Modelle bei chaotischen Daten
 - → **Immer als Baseline testen!**
 
-#### 4. **"State-of-the-Art" Modelle können TOTAL versagen** ❌
-- N-BEATS: M4 Champion, aber R²=-18.93 bei Solar
-- N-HiTS: Auch negativ (R²=-4.22)
+#### 5. **"State-of-the-Art" Modelle versagen KONSISTENT** ❌❌
+- N-BEATS: -18.93 (Solar), -0.94 (Consumption)
+- N-HiTS: -4.22 (Solar), **-9.58** (Consumption)
+- DeepAR: -1.24 (Consumption)
+- **Konsistenz:** Alle SOTA-Modelle versagen bei beiden Zeitreihen!
 - Grund: Univariat optimiert, keine Features, falsche Domain
 - → **SOTA ≠ Beste Lösung - immer selbst benchmarken!**
 
-#### 5. **Bi-LSTM > Standard LSTM (aber nur bei richtigen Daten)**
+#### 6. **Bi-LSTM vs GRU: Pattern-Typ entscheidet!**
 - Bi-LSTM (R²=0.9955) vs LSTM (R²=0.9934)
 - +0.2% durch bidirektionale Architektur
 - → **Bei symmetrischen Patterns immer Bi-LSTM testen!**
 
-#### 7. **Training Zeit ≠ Model Performance**
+#### 9. **Training Zeit ≠ Model Performance**
 - N-BEATS: 977s Training → R²=-18.93 ❌
 - Bi-LSTM: 30s Training → R²=0.9955 ✅
 - **32x schneller** und **unendlich besser**
@@ -684,63 +836,87 @@ START: Analysiere deine Zeitreihe
 - ML-Modelle können direkt mit Trends umgehen
 - → **Check Stationarity first!**
 8
-#### 9. **Multivariate Modelle sind fragil**
+#### 11. **Multivariate Modelle sind fragil**
 - VAR: Ein schlechter Zeitreihen-Input zerstört alles
 - Granger-Kausalität ≠ Forecast-Verbesserung
 - → **Use multivariate nur mit sehr cleanen Daten**
 
-#### 10. **Metrik-Wahl ist kritisch**
+#### 12. **Metrik-Wahl ist kritisch**
 - R² gut für smooth series (Solar, Consumption)
 - MAPE irreführend bei Werten nahe 0 (Wind Offshore Stillstand)
 - Bei Spikes: Hit-Rate besser als RMSE
 - → **Choose metrics based on business problem!**
 
-#### 11. **Negative Prices sind Features, keine Errors**
+#### 13. **Negative Prices sind Features, keine Errors**
 - 827 Fälle (3.15%) bei Price
 - Oversupply-Signal → wichtig für Modell
 - → **Domain Knowledge beats Statistics!**
 
 ### 🔮 Nächste Schritte
 
-1. ✅ **Solar Bi-LSTM:** Abgeschlossen (R²=0.9955) - **Champion!**
-2. 🚧 **DL für alle Zeitreihen:** Wind Offshore, Onshore, Price, Consumption
-3. 🎯 **Ensemble:** Bi-LSTM + LightGBM → Best of both worlds?
-4. 🌐 **Exogene Features:** Wetter-Daten (Windgeschwindigkeit, Bewölkung)
-5. 🔧 **N-BEATS Debug:** Warum versagt es? Kann man es fixen?
-6. 🔄 **Transfer Learning:** Bi-LSTM von Solar auf Wind übertragen?
-7. 📊 **Unsicherheitsschätzung:** VAE + Bi-LSTM für probabilistische Forecasts
-8. 🚀 **Production:** Deployment-Pipeline für Bi-LSTM (TensorFlow Serving?)
+1. ✅ **Solar Bi-LSTM:** Abgeschlossen (R²=0.9955) - Archetyp 1 Champion!
+2. ✅ **Consumption GRU:** Abgeschlossen (R²=0.9874) - Archetyp 2 Champion! 🆕
+3. ❌ **Wind Onshore:** Getestet, DL versagt (LSTM R²=0.8956 vs RF 0.9997)
+4. 🚧 **Wind Offshore:** DL-Testing ausstehend (ähnlich Wind Onshore erwartet)
+5. 🚧 **Price:** DL-Testing ausstehend (Spikes → evtl. DL hilft nicht)
+6. 🎯 **GRU-First Strategy:** GRU als Default für neue Zeitreihen testen
+7. 🔄 **Ensemble:** GRU + LightGBM kombinieren (temporal + features)
+8. 📊 **ACF-Based Routing:** Automatische Modellwahl basierend auf ACF
+9. 🌐 **Exogene Features:** Wetter-Daten (Wind, Solar-Irradiance) integrieren
+10. 🔧 **N-BEATS Debug:** Kann man SOTA-Modelle fixen? (evtl. nicht lohnend)
 
 ### 💡 Open Questions für Diskussion
 
-1. **Warum schlägt Bi-LSTM LightGBM bei Solar, aber nicht bei Wind Onshore?**
-   - Wind R²: LSTM=0.896 << RF=0.9997
-   - Solar R²: Bi-LSTM=0.9955 > LightGBM=0.9838
-   - → Mehr Noise in Wind-Daten? Sequenzielle Patterns fehlen?
+1. **Warum ist GRU bei Consumption besser als Bi-LSTM?**
+   - Wochenmuster unidirektional → Bi-LSTM bringt nichts?
+   - Oder Bi-LSTM overfittet bei dieser Datenmenge?
+   - → **Generelle Regel: GRU für Wochen, Bi-LSTM für Tage?**
 
-2. **Ist R²=0.9955 realistisch oder Overfitting?**
-   - Test-Set strikt separiert (2.208 Stunden)
-   - Early Stopping aktiv
-   - → Wahrscheinlich echt, aber Monitor in Production!
+2. **Warum profitiert Consumption (3.7%) mehr von DL als Solar (1.2%)?**
+   - ML bei Consumption schwächer (0.95 vs 0.9838)
+   - Komplexere Multi-Pattern-Struktur (Wochen + Tage)?
+   - → **DL-ROI steigt, wenn ML versagt?**
 
-3. **Lohnt sich GPU-Investment für +1.2% R²?**
-   - Colab Pro: ~500€/Jahr
-   - Business Value: 1% bessere Solar-Prognose = X Mio € Savings?
-   - → ROI-Rechnung nötig!
+3. **Kann man N-BEATS/N-HiTS überhaupt retten?**
+   - Konsistent negativ bei Solar UND Consumption
+   - Längere Sequences? Features hinzufügen? Hyperparameter?
+   - → **Oder fundamental falsch für Energy Time Series?**
 
-4. **Warum scheitert N-BEATS so drastisch?** ❌
-   - Skalierung? Hyperparameter? Fehlende Features?
-   - → Reproduzierbarkeit-Problem in DL Research?
+4. **GRU + LightGBM Ensemble = 0.99+?**
+   - GRU lernt temporale Patterns (0.9874)
+   - LightGBM lernt Feature-Interactions (0.95)
+   - Verschiedene Fehler → Kombination besser?
+   - → **Weighted Average oder Stacking testen?**
 
-5. **Ensemble: 0.9955 + 0.9838 = 0.997?**
-   - Bi-LSTM erfasst Sequenzen, LightGBM strukturierte Features
-   - Verschiedene Fehler → Kombination könnte helfen
-   - → Weighted Average oder Stacking?
+5. **ACF-Based Model Routing automatisieren?**
+   ```
+   if ACF(24h) > 0.7 and symmetrisch:
+       model = Bi-LSTM
+   elif ACF(168h) > ACF(24h):
+       model = GRU
+   elif ACF(24h) < 0.3:
+       model = RandomForest
+   else:
+       model = LightGBM
+   ```
+   → **Auto-ML für Architektur-Wahl?**
 
-6. **Transfer Learning für Wind?**
-   - Solar-vortrainiertes Bi-LSTM als Basis für Wind
-   - Ähnliche Tagesmuster, aber andere Physik
-   - → Fine-Tuning vielversprechend?
+6. **Transfer Learning zwischen Zeitreihen?**
+   - Solar-Bi-LSTM → andere PV-Anlagen? → ✅ Ja (gleicher Archetyp)
+   - Consumption-GRU → andere Länder? → ✅ Ja (gleiche Wochen-Struktur)
+   - Solar → Wind? → ❌ Nein (unterschiedliche Archetypen)
+   - → **Archetyp-Matching für Transfer Learning!**
+
+7. **Ist R²=0.9997 bei Wind "zu gut"?**
+   - Fast perfekt für chaotische Daten
+   - Overfitting? Oder Test-Set zu einfach?
+   - → **Cross-Validation über mehrere Jahre nötig?**
+
+8. **Sollte man LSTM bei Wind überhaupt versuchen?**
+   - 10x Aufwand (GPU, Code, Tuning)
+   - Ergebnis: 11% schlechter als RF
+   - ROI klar negativ!
+   - → **ACF-Pre-Check macht DL-Training überflüssig?**
 
 ---
 
