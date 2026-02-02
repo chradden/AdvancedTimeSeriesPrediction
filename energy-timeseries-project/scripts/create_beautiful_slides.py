@@ -218,8 +218,8 @@ html_output = f"""<!DOCTYPE html>
         /* Slide Counter */
         .slide-number {{
             position: fixed;
-            bottom: 40px;
-            left: 40px;
+            bottom: 105px;
+            right: 40px;
             background: rgba(0,0,0,0.8);
             color: white;
             padding: 12px 24px;

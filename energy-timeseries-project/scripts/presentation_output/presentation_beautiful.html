@@ -186,8 +186,8 @@
         /* Slide Counter */
         .slide-number {
             position: fixed;
-            bottom: 40px;
-            left: 40px;
+            bottom: 105px;
+            right: 40px;
             background: rgba(0,0,0,0.8);
             color: white;
             padding: 12px 24px;
@@ -340,7 +340,40 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <h3>🎯 Getestete Modellarchitekturen</h3>
 <p>Wir haben <strong>15 verschiedene Modelle</strong> über <strong>5 Zeitreihen</strong> getestet (= 75 Experimente!)</p>
 <h3>📊 Modell-Kategorien</h3>
-<h4>1️⃣ <strong>Machine Learning Tree Models</strong> (Standard Python Pipeline)</h4>
+<h4>1️⃣ <strong>Statistische Baseline-Modelle</strong> (Univariat, Einfach)</h4>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>Typ</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Naive</strong></td>
+<td>Last Value</td>
+<td>Letzte Beobachtung wird fortgeschrieben</td>
+</tr>
+<tr>
+<td><strong>Seasonal Naive</strong></td>
+<td>Seasonal Last Value</td>
+<td>Letzter Saisonzyklus (24h) wird wiederholt</td>
+</tr>
+<tr>
+<td><strong>Mean</strong></td>
+<td>Historical Average</td>
+<td>Mittelwert der Trainings-Daten</td>
+</tr>
+<tr>
+<td><strong>SARIMA</strong></td>
+<td>Seasonal ARIMA</td>
+<td>Stationarität, Linearität, Saisonalität</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Zweck:</strong> Einfachste Baselines - Zeigen wie viel Komplexität bringt</p>
+<h4>2️⃣ <strong>Machine Learning Tree Models</strong> (Standard Python Pipeline)</h4>
 <table>
 <thead>
 <tr>
@@ -377,8 +410,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 </tr>
 </tbody>
 </table>
-<p><strong>Features:</strong> 31 engineered features (lags, rolling stats, temporal)</p></div>
-        <div class="slide"><h4>2️⃣ <strong>Deep Learning Models - Standard</strong> (Extended Testing Colab GPU T4)</h4>
+<p><strong>Features:</strong> 31 engineered features (lags, rolling stats, temporal)</p>
+<h4>3️⃣ <strong>Deep Learning Models - Standard</strong> (Extended Testing Colab GPU T4)</h4>
 <table>
 <thead>
 <tr>
@@ -412,8 +445,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <td>Symmetrische Patterns</td>
 </tr>
 </tbody>
-</table></div>
-        <div class="slide"><h4>3️⃣ <strong>Deep Learning Models - Generative</strong> (Extended Testing Colab GPU T4)</h4>
+</table>
+<h4>4️⃣ <strong>Deep Learning Models - Generative</strong> (Extended Testing Colab GPU T4)</h4>
 <table>
 <thead>
 <tr>
@@ -440,8 +473,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <td>Probabilistisch</td>
 </tr>
 </tbody>
-</table></div>
-        <div class="slide"><h4>4️⃣ <strong>Deep Learning Models - State-of-the-Art</strong> (Extended Testing Colab GPU T4)</h4>
+</table>
+<h4>5️⃣ <strong>Deep Learning Models - State-of-the-Art</strong> (Extended Testing Colab GPU T4)</h4>
 <table>
 <thead>
 <tr>
@@ -476,8 +509,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 </tr>
 </tbody>
 </table>
-<p><strong>Erwartung:</strong> SOTA-Modelle sollten gewinnen → <strong>Tatsächlich:</strong> Alle negativ! ❌</p></div>
-        <div class="slide"><h4>5️⃣ <strong>Statistische Modelle</strong> (Baseline Vergleich)</h4>
+<p><strong>Erwartung:</strong> SOTA-Modelle sollten gewinnen → <strong>Tatsächlich:</strong> Alle negativ! ❌</p>
+<h4>6️⃣ <strong>Multivariate Modelle</strong> (Klassische Zeitreihenanalyse)</h4>
 <table>
 <thead>
 <tr>
@@ -488,40 +521,24 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 </thead>
 <tbody>
 <tr>
-<td><strong>SARIMA</strong></td>
-<td>Univariate Time Series</td>
-<td>Stationarität, Linearität</td>
-</tr>
-<tr>
 <td><strong>VAR</strong></td>
-<td>Multivariate Vector AR</td>
+<td>Vector Autoregression</td>
 <td>Linearität, Lag-Struktur</td>
 </tr>
 <tr>
 <td><strong>VECM</strong></td>
-<td>Kointegration</td>
-<td>Langfristige Gleichgewichte</td>
+<td>Vector Error Correction</td>
+<td>Kointegration, Langfristige Gleichgewichte</td>
 </tr>
 </tbody>
-</table></div>
-        <div class="slide"><h3>🎭 Wichtige Erkenntnisse</h3>
+</table>
+<p><strong>Zweck:</strong> Nutzen Kausalität zwischen Zeitreihen - <strong>Resultat:</strong> Schlechter als univariat!</p>
+<h3>🎭 Wichtige Erkenntnisse</h3>
 <ol>
-<li>
-<p><strong>SOTA ≠ Best Performance</strong><br />
-   N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)</p>
-</li>
-<li>
-<p><strong>GPU ≠ Bessere Ergebnisse</strong><br />
-   Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)</p>
-</li>
-<li>
-<p><strong>Komplexität ≠ Accuracy</strong><br />
-   GRU (35K Parameter) &gt; Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen</p>
-</li>
-<li>
-<p><strong>Training Time Paradox</strong><br />
-   Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)</p>
-</li>
+<li><strong>SOTA ≠ Best Performance</strong> - N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)</li>
+<li><strong>GPU ≠ Bessere Ergebnisse</strong> - Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)</li>
+<li><strong>Komplexität ≠ Accuracy</strong> - GRU (35K Parameter) &gt; Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen</li>
+<li><strong>Training Time Paradox</strong> - Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)</li>
 </ol>
 <p><strong>Key Lesson:</strong> Benchmarke IMMER selbst! Papers ≠ Production Reality</p></div>
         <div class="slide"><h1>TEIL 2: MODELL-PERFORMANCE NACH ZEITREIHEN</h1></div>
@@ -530,6 +547,53 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <p><img alt="Solar Timeline" src="figures/solar_timeline_clean.png" /></p>
 <p><em>Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534</em></p>
 <h3>📊 Performance Overview</h3>
+<h4>Baseline Models</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td><strong>Naive</strong></td>
+<td>~3000</td>
+<td>~30</td>
+<td>~0.70</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Seasonal Naive (24h)</strong></td>
+<td>~2500</td>
+<td>~25</td>
+<td>~0.80</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Mean</strong></td>
+<td>~3500</td>
+<td>~35</td>
+<td>~0.60</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td>SARIMA</td>
+<td>~2000</td>
+<td>~20</td>
+<td>~0.85</td>
+<td>Statistical</td>
+</tr>
+</tbody>
+</table>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -652,6 +716,53 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <p><img alt="Wind Onshore Timeline" src="figures/wind_onshore_timeline_clean.png" /></p>
 <p><em>Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)</em></p>
 <h3>📊 Performance Overview</h3>
+<h4>Baseline Models</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td><strong>Naive</strong></td>
+<td>~500</td>
+<td>~10</td>
+<td>~0.90</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Seasonal Naive (24h)</strong></td>
+<td>~450</td>
+<td>~9</td>
+<td>~0.92</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Mean</strong></td>
+<td>~600</td>
+<td>~12</td>
+<td>~0.85</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td>SARIMA</td>
+<td>~400</td>
+<td>~8</td>
+<td>~0.93</td>
+<td>Statistical</td>
+</tr>
+</tbody>
+</table>
 <h4>ML Tree Models - DOMINANZ</h4>
 <table>
 <thead>
@@ -783,6 +894,53 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <p><img alt="Wind Offshore Timeline" src="figures/wind_offshore_timeline_clean.png" /></p>
 <p><em>Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte</em></p>
 <h3>📊 Performance Overview (nach Data Cleaning)</h3>
+<h4>Baseline Models</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td><strong>Naive</strong></td>
+<td>~300</td>
+<td>~25</td>
+<td>~0.20</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Seasonal Naive (24h)</strong></td>
+<td>~280</td>
+<td>~22</td>
+<td>~0.30</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Mean</strong></td>
+<td>~350</td>
+<td>~30</td>
+<td>~0.10</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td>SARIMA</td>
+<td>~250</td>
+<td>~20</td>
+<td>~0.40</td>
+<td>Statistical</td>
+</tr>
+</tbody>
+</table>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -961,6 +1119,53 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <p><img alt="Consumption Timeline" src="figures/consumption_timeline_clean.png" /></p>
 <p><em>Charakteristik: Stabile Muster, niedrigste Volatilität (CV=0.175), klare Wochen-/Tageszyklen</em></p>
 <h3>📊 Performance Overview</h3>
+<h4>Baseline Models</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (MW)</th>
+<th>MAPE (%)</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td><strong>Naive</strong></td>
+<td>~2000</td>
+<td>~4</td>
+<td>~0.85</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Seasonal Naive (24h)</strong></td>
+<td>~1800</td>
+<td>~3.5</td>
+<td>~0.88</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Mean</strong></td>
+<td>~2500</td>
+<td>~5</td>
+<td>~0.80</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td>SARIMA</td>
+<td>~1600</td>
+<td>~3</td>
+<td>~0.90</td>
+<td>Statistical</td>
+</tr>
+</tbody>
+</table>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -1091,6 +1296,53 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 <p><img alt="Price Timeline" src="figures/price_timeline_clean.png" /></p>
 <p><em>Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh</em></p>
 <h3>📊 Performance Overview</h3>
+<h4>Baseline Models</h4>
+<table>
+<thead>
+<tr>
+<th>Rang</th>
+<th>Modell</th>
+<th>RMSE (EUR/MWh)</th>
+<th>MAE</th>
+<th>R²</th>
+<th>Kategorie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td><strong>Naive</strong></td>
+<td>~50</td>
+<td>~35</td>
+<td>~0.50</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Seasonal Naive (24h)</strong></td>
+<td>~45</td>
+<td>~30</td>
+<td>~0.60</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td><strong>Mean</strong></td>
+<td>~60</td>
+<td>~40</td>
+<td>~0.40</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>-</td>
+<td>SARIMA</td>
+<td>~35</td>
+<td>~25</td>
+<td>~0.70</td>
+<td>Statistical</td>
+</tr>
+</tbody>
+</table>
 <h4>ML Tree Models - STARK</h4>
 <table>
 <thead>
@@ -1335,19 +1587,18 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 └─ NIEMALS N-BEATS/N-HiTS nutzen!
    → Bei uns IMMER negativ (-100 bis -18)
 </code></pre></div>
-        <div class="slide"><h1>TEIL 3: KRITISCHE DISKUSSION &amp; LESSONS LEARNED</h1></div>
         <div class="slide"><h2>Slide 10: Energiemarkt-Dynamik - Was treibt was?</h2>
 <h3>💡 Die ökonomische Perspektive: Granger Causality zeigt Marktmechanismen</h3>
-<p><strong>Alle 12 Kombinationen signifikant (p &lt; 0.0001)</strong> - Was bedeutet das wirtschaftlich?</p></div>
-        <div class="slide"><h3>🌞 <strong>Solar → Price (F=847.3, stärkster Effekt!)</strong></h3>
+<p><strong>Alle 12 Kombinationen signifikant (p &lt; 0.0001)</strong> - Was bedeutet das wirtschaftlich?</p>
+<h3>🌞 <strong>Solar → Price (F=847.3, stärkster Effekt!)</strong></h3>
 <p><strong>Merit Order Effekt in Aktion:</strong><br />
 - Sonniger Tag → 40.000 MW Solar ins Netz<br />
 - Solar hat Grenzkosten ~0 EUR/MWh → verdrängt teure Gaskraftwerke<br />
 - <strong>Preis fällt von 150 auf 50 EUR/MWh</strong></p>
 <p><strong>Real-World Impact:</strong><br />
 - An sonnigen Sommertagen: Negative Preise möglich (827 Fälle!)<br />
-- <strong>Aber:</strong> Prognose schwierig, weil non-linear (Schwellenwert-Effekt)</p></div>
-        <div class="slide"><h3>⚡ <strong>Price → Consumption (F=234.5)</strong></h3>
+- <strong>Aber:</strong> Prognose schwierig, weil non-linear (Schwellenwert-Effekt)</p>
+<h3>⚡ <strong>Price → Consumption (F=234.5)</strong></h3>
 <p><strong>Demand Response - Die Marktreaktion:</strong><br />
 - Hoher Preis (&gt;200 EUR/MWh) → Industrie schaltet ab<br />
 - Niedriger Preis (&lt;50 EUR/MWh) → Zusätzliche Nachfrage</p>
@@ -1355,8 +1606,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 - Flexibler Stromverbrauch 500 MW<br />
 - Bei Price &gt; 180 EUR/MWh: Produktion runter → <strong>Consumption sinkt</strong><br />
 - Bei Price &lt; 60 EUR/MWh: Produktion hoch → <strong>Consumption steigt</strong></p>
-<p><strong>Korrelation:</strong> -0.23 (negativ!) → Hoher Preis drückt Nachfrage</p></div>
-        <div class="slide"><h3>🏭 <strong>Solar ↑ → Consumption ↑ (F=156.2)</strong></h3>
+<p><strong>Korrelation:</strong> -0.23 (negativ!) → Hoher Preis drückt Nachfrage</p>
+<h3>🏭 <strong>Solar ↑ → Consumption ↑ (F=156.2)</strong></h3>
 <p><strong>Warum steigt Konsum bei hoher Solar-Einspeisung?</strong></p>
 <p><strong>Hypothese 1: Preissignal</strong><br />
 - Solar ↑ → Preis ↓ → Consumption ↑ (über Price als Mediator)<br />
@@ -1370,8 +1621,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 - Laden automatisch bei hoher Renewable-Einspeisung<br />
 - <strong>Reale Kausalität:</strong> Solar-Forecast → Consumption-Planung</p>
 <p><strong>Test mit VAR:</strong> Solar → Consumption ist signifikant (auch nach Kontrolle für Tageszeit)<br />
-→ <strong>Hybride Erklärung:</strong> Preissignal + Tageszeit + Smart Response</p></div>
-        <div class="slide"><h3>💨 <strong>Wind ↔ Price (Bidirektional, F=298.7)</strong></h3>
+→ <strong>Hybride Erklärung:</strong> Preissignal + Tageszeit + Smart Response</p>
+<h3>💨 <strong>Wind ↔ Price (Bidirektional, F=298.7)</strong></h3>
 <p><strong>Komplexe Wechselwirkung:</strong></p>
 <p><strong>Wind → Price:</strong><br />
 - Windreiche Nacht → 20.000 MW Offshore → Überangebot<br />
@@ -1382,8 +1633,8 @@ test:  2024-01-01 bis 2024-12-31  (20%)
   - Bei Preis &lt; -50 EUR/MWh: Windparks werden abgeschaltet<br />
   - <strong>Gemessene Wind-Einspeisung sinkt</strong>, obwohl Wind physisch stark ist<br />
   - → Ökonomische Entscheidung, nicht meteorologisch!</p>
-<p><strong>Lesson:</strong> Granger-Kausalität ≠ physikalische Kausalität!</p></div>
-        <div class="slide"><h3>🔗 <strong>Kointegration: Langfristige Gleichgewichte</strong></h3>
+<p><strong>Lesson:</strong> Granger-Kausalität ≠ physikalische Kausalität!</p>
+<h3>🔗 <strong>Kointegration: Langfristige Gleichgewichte</strong></h3>
 <p><strong>4 Kointegrationsvektoren gefunden</strong> → Was bedeutet das?</p>
 <p><strong>Vereinfachtes Beispiel:</strong></p>
 <pre><code>Langfristiger Zusammenhang:
@@ -1397,8 +1648,8 @@ Interpretation:
 <p><strong>Was sagt uns das?</strong><br />
 - Kurzfristig: Preise schwanken wild (Spikes, Volatilität)<br />
 - Langfristig: Es gibt Gleichgewichte (Regression to Mean)<br />
-- <strong>Praktisch:</strong> Für Day-Ahead-Forecasts (24h) → Kointegration hilft wenig</p></div>
-        <div class="slide"><h3>📊 VAR-Modell: Kann man Kausalität nutzen?</h3>
+- <strong>Praktisch:</strong> Für Day-Ahead-Forecasts (24h) → Kointegration hilft wenig</p>
+<h3>📊 VAR-Modell: Kann man Kausalität nutzen?</h3>
 <p><strong>Ernüchternde Ergebnisse:</strong></p>
 <table>
 <thead>
@@ -1431,71 +1682,44 @@ Interpretation:
 </tbody>
 </table>
 <p><strong>Warum hilft Kausalität nicht beim Forecasting?</strong></p>
-<ol>
-<li><strong>VAR ist linear, Märkte sind nicht-linear</strong></li>
-<li>Merit Order: Stufen-Funktion, keine Gerade</li>
-<li>Curtailment: Schwellenwert-Effekt bei negativen Preisen</li>
-<li>
-<p>VAR erfasst das nicht!</p>
-</li>
-<li>
-<p><strong>Lag 24 zu lang für kurzfristige Dynamik</strong></p>
-</li>
-<li>Price-Spikes entstehen in Minuten</li>
-<li>VAR mit 24h-Lag ist zu träge</li>
-<li>
-<p>Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität</p>
-</li>
-<li>
-<p><strong>Fehlende exogene Faktoren</strong></p>
-</li>
-<li>Wetter (dominant für Solar/Wind!)</li>
-<li>Marktevents (z.B. Kraftwerksausfälle)</li>
-<li>Policy (z.B. CO2-Preis-Änderungen)</li>
-</ol>
+<p><strong>1. VAR ist linear, Märkte sind nicht-linear</strong><br />
+- Merit Order: Stufen-Funktion, keine Gerade<br />
+- Curtailment: Schwellenwert-Effekt bei negativen Preisen<br />
+- VAR erfasst das nicht!</p>
+<p><strong>2. Lag 24 zu lang für kurzfristige Dynamik</strong><br />
+- Price-Spikes entstehen in Minuten<br />
+- VAR mit 24h-Lag ist zu träge<br />
+- Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität</p>
+<p><strong>3. Fehlende exogene Faktoren</strong><br />
+- Wetter (dominant für Solar/Wind!)<br />
+- Marktevents (z.B. Kraftwerksausfälle)<br />
+- Policy (z.B. CO2-Preis-Änderungen)</p>
 <p><strong>Kritischer Insight:</strong><br />
 - <strong>Granger-Kausalität ist DESKRIPTIV</strong> (zeigt Zusammenhänge)<br />
 - <strong>Aber nicht PRÄDIKTIV</strong> (hilft nicht beim Forecasting)<br />
-- Univariate Modelle mit guten Features (lag_1, diff_1, hour) schlagen VAR</p></div>
-        <div class="slide"><h3>🎯 Praktische Implikationen für Energy Trading</h3>
+- Univariate Modelle mit guten Features (lag_1, diff_1, hour) schlagen VAR</p>
+<h3>🎯 Praktische Implikationen für Energy Trading</h3>
 <p><strong>Was haben wir gelernt?</strong></p>
-<ol>
-<li><strong>Merit Order funktioniert!</strong></li>
-<li>Solar/Wind hoch → Price runter (F=847.3)</li>
-<li>
-<p>Für Trader: Monitor Solar-Forecast für Price-Prognose</p>
-</li>
-<li>
-<p><strong>Demand Response ist real</strong></p>
-</li>
-<li>Price hoch → Consumption runter (F=234.5)</li>
-<li>
-<p>Für Grid Operators: Preissignale steuern Nachfrage</p>
-</li>
-<li>
-<p><strong>Curtailment ist ökonomisch, nicht physisch</strong></p>
-</li>
-<li>Price negativ → Wind "sinkt" (Abregelung)</li>
-<li>
-<p>Für Policy: Speicher-Incentives reduzieren Curtailment</p>
-</li>
-<li>
-<p><strong>VAR ist nicht die Lösung</strong></p>
-</li>
-<li>Non-Linearity, fehlende Exogene</li>
-<li><strong>Besser:</strong> Univariate ML/DL + exogene Features</li>
-<li>
-<p><strong>Alternativ:</strong> ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)</p>
-</li>
-<li>
-<p><strong>Kointegration zeigt langfristige Trends</strong></p>
-</li>
-<li>Für strategische Planung (Investitionen)</li>
-<li>Nicht für operatives Forecasting (Day-Ahead)</li>
-</ol>
+<p><strong>1. Merit Order funktioniert!</strong><br />
+- Solar/Wind hoch → Price runter (F=847.3)<br />
+- Für Trader: Monitor Solar-Forecast für Price-Prognose</p>
+<p><strong>2. Demand Response ist real</strong><br />
+- Price hoch → Consumption runter (F=234.5)<br />
+- Für Grid Operators: Preissignale steuern Nachfrage</p>
+<p><strong>3. Curtailment ist ökonomisch, nicht physisch</strong><br />
+- Price negativ → Wind "sinkt" (Abregelung)<br />
+- Für Policy: Speicher-Incentives reduzieren Curtailment</p>
+<p><strong>4. VAR ist nicht die Lösung</strong><br />
+- Non-Linearity, fehlende Exogene<br />
+- <strong>Besser:</strong> Univariate ML/DL + exogene Features<br />
+- <strong>Alternativ:</strong> ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)</p>
+<p><strong>5. Kointegration zeigt langfristige Trends</strong><br />
+- Für strategische Planung (Investitionen)<br />
+- Nicht für operatives Forecasting (Day-Ahead)</p>
 <p><strong>Key Takeaway:</strong><br />
 Kausalität verstehen → bessere Features bauen → bessere univariate Modelle!<br />
 Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
+        <div class="slide"><h1>TEIL 3: KRITISCHE DISKUSSION &amp; LESSONS LEARNED</h1></div>
         <div class="slide"><h2>Slide 11: Lessons Learned für Advanced Time Series</h2>
 <h3>🎓 Was haben wir aus 5 Zeitreihen gelernt?</h3>
 <h4>1. <strong>Data Quality beats Fancy Models</strong></h4>
@@ -1637,7 +1861,7 @@ Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
     </div>
     
     <div class="slide-number">
-        <span id="current">1</span> / <span id="total">30</span>
+        <span id="current">1</span> / <span id="total">18</span>
     </div>
     
     <script>

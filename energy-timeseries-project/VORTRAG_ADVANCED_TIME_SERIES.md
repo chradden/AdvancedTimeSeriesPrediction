@@ -104,7 +104,18 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 
 ### 📊 Modell-Kategorien
 
-#### 1️⃣ **Machine Learning Tree Models** (Standard Python Pipeline)
+#### 1️⃣ **Statistische Baseline-Modelle** (Univariat, Einfach)
+
+| Modell | Typ | Beschreibung |
+|--------|-----|--------------|
+| **Naive** | Last Value | Letzte Beobachtung wird fortgeschrieben |
+| **Seasonal Naive** | Seasonal Last Value | Letzter Saisonzyklus (24h) wird wiederholt |
+| **Mean** | Historical Average | Mittelwert der Trainings-Daten |
+| **SARIMA** | Seasonal ARIMA | Stationarität, Linearität, Saisonalität |
+
+**Zweck:** Einfachste Baselines - Zeigen wie viel Komplexität bringt
+
+#### 2️⃣ **Machine Learning Tree Models** (Standard Python Pipeline)
 
 | Modell | Typ | Training Umgebung | Stärken |
 |--------|-----|-------------------|---------|
@@ -115,9 +126,7 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 
 **Features:** 31 engineered features (lags, rolling stats, temporal)
 
----
-
-#### 2️⃣ **Deep Learning Models - Standard** (Extended Testing Colab GPU T4)
+#### 3️⃣ **Deep Learning Models - Standard** (Extended Testing Colab GPU T4)
 
 | Modell | Architektur | Parameter | Training Zeit | Use Case |
 |--------|-------------|-----------|---------------|----------|
@@ -125,18 +134,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 | **GRU** | Recurrent (vereinfacht) | ~35K | 15-25s | Unidirektional, schneller |
 | **Bi-LSTM** | Bidirektional | ~100K | 30-60s | Symmetrische Patterns |
 
----
-
-#### 3️⃣ **Deep Learning Models - Generative** (Extended Testing Colab GPU T4)
+#### 4️⃣ **Deep Learning Models - Generative** (Extended Testing Colab GPU T4)
 
 | Modell | Typ | Parameter | Training Zeit | Komplexität |
 |--------|-----|-----------|---------------|-------------|
 | **Autoencoder** | Encoder-Decoder | ~80K | 40-80s | Feature Learning |
 | **VAE** | Variational | ~100K | 60-190s | Probabilistisch |
 
----
-
-#### 4️⃣ **Deep Learning Models - State-of-the-Art** (Extended Testing Colab GPU T4)
+#### 5️⃣ **Deep Learning Models - State-of-the-Art** (Extended Testing Colab GPU T4)
 
 | Modell | Paper | Parameter | Training Zeit | Spezialisierung |
 |--------|-------|-----------|---------------|-----------------|
@@ -146,31 +151,21 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 
 **Erwartung:** SOTA-Modelle sollten gewinnen → **Tatsächlich:** Alle negativ! ❌
 
----
-
-#### 5️⃣ **Statistische Modelle** (Baseline Vergleich)
+#### 6️⃣ **Multivariate Modelle** (Klassische Zeitreihenanalyse)
 
 | Modell | Typ | Annahmen |
 |--------|-----|----------|
-| **SARIMA** | Univariate Time Series | Stationarität, Linearität |
-| **VAR** | Multivariate Vector AR | Linearität, Lag-Struktur |
-| **VECM** | Kointegration | Langfristige Gleichgewichte |
+| **VAR** | Vector Autoregression | Linearität, Lag-Struktur |
+| **VECM** | Vector Error Correction | Kointegration, Langfristige Gleichgewichte |
 
----
+**Zweck:** Nutzen Kausalität zwischen Zeitreihen - **Resultat:** Schlechter als univariat!
 
 ### 🎭 Wichtige Erkenntnisse
 
-1. **SOTA ≠ Best Performance**  
-   N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)
-
-2. **GPU ≠ Bessere Ergebnisse**  
-   Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)
-
-3. **Komplexität ≠ Accuracy**  
-   GRU (35K Parameter) > Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen
-
-4. **Training Time Paradox**  
-   Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)
+1. **SOTA ≠ Best Performance** - N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)
+2. **GPU ≠ Bessere Ergebnisse** - Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)
+3. **Komplexität ≠ Accuracy** - GRU (35K Parameter) > Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen
+4. **Training Time Paradox** - Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)
 
 **Key Lesson:** Benchmarke IMMER selbst! Papers ≠ Production Reality
 
@@ -189,6 +184,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 *Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534*
 
 ### 📊 Performance Overview
+
+#### Baseline Models
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| - | **Naive** | ~3000 | ~30 | ~0.70 | Baseline |
+| - | **Seasonal Naive (24h)** | ~2500 | ~25 | ~0.80 | Baseline |
+| - | **Mean** | ~3500 | ~35 | ~0.60 | Baseline |
+| - | SARIMA | ~2000 | ~20 | ~0.85 | Statistical |
 
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -230,6 +233,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 *Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)*
 
 ### 📊 Performance Overview
+
+#### Baseline Models
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| - | **Naive** | ~500 | ~10 | ~0.90 | Baseline |
+| - | **Seasonal Naive (24h)** | ~450 | ~9 | ~0.92 | Baseline |
+| - | **Mean** | ~600 | ~12 | ~0.85 | Baseline |
+| - | SARIMA | ~400 | ~8 | ~0.93 | Statistical |
 
 #### ML Tree Models - DOMINANZ
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -273,6 +284,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 *Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte*
 
 ### 📊 Performance Overview (nach Data Cleaning)
+
+#### Baseline Models
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| - | **Naive** | ~300 | ~25 | ~0.20 | Baseline |
+| - | **Seasonal Naive (24h)** | ~280 | ~22 | ~0.30 | Baseline |
+| - | **Mean** | ~350 | ~30 | ~0.10 | Baseline |
+| - | SARIMA | ~250 | ~20 | ~0.40 | Statistical |
 
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -337,6 +356,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 
 ### 📊 Performance Overview
 
+#### Baseline Models
+| Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
+|------|--------|-----------|----------|-----|-----------|
+| - | **Naive** | ~2000 | ~4 | ~0.85 | Baseline |
+| - | **Seasonal Naive (24h)** | ~1800 | ~3.5 | ~0.88 | Baseline |
+| - | **Mean** | ~2500 | ~5 | ~0.80 | Baseline |
+| - | SARIMA | ~1600 | ~3 | ~0.90 | Statistical |
+
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
 |------|--------|-----------|----------|-----|-----------|
@@ -378,6 +405,14 @@ Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Expe
 *Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh*
 
 ### 📊 Performance Overview
+
+#### Baseline Models
+| Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Kategorie |
+|------|--------|----------------|-----|-----|-----------|
+| - | **Naive** | ~50 | ~35 | ~0.50 | Baseline |
+| - | **Seasonal Naive (24h)** | ~45 | ~30 | ~0.60 | Baseline |
+| - | **Mean** | ~60 | ~40 | ~0.40 | Baseline |
+| - | SARIMA | ~35 | ~25 | ~0.70 | Statistical |
 
 #### ML Tree Models - STARK
 | Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Kategorie |
@@ -473,17 +508,11 @@ START: Analysiere deine Zeitreihe
 
 ---
 
-# TEIL 3: KRITISCHE DISKUSSION & LESSONS LEARNED
-
----
-
 ## Slide 10: Energiemarkt-Dynamik - Was treibt was?
 
 ### 💡 Die ökonomische Perspektive: Granger Causality zeigt Marktmechanismen
 
 **Alle 12 Kombinationen signifikant (p < 0.0001)** - Was bedeutet das wirtschaftlich?
-
----
 
 ### 🌞 **Solar → Price (F=847.3, stärkster Effekt!)**
 
@@ -495,8 +524,6 @@ START: Analysiere deine Zeitreihe
 **Real-World Impact:**
 - An sonnigen Sommertagen: Negative Preise möglich (827 Fälle!)
 - **Aber:** Prognose schwierig, weil non-linear (Schwellenwert-Effekt)
-
----
 
 ### ⚡ **Price → Consumption (F=234.5)**
 
@@ -510,8 +537,6 @@ START: Analysiere deine Zeitreihe
 - Bei Price < 60 EUR/MWh: Produktion hoch → **Consumption steigt**
 
 **Korrelation:** -0.23 (negativ!) → Hoher Preis drückt Nachfrage
-
----
 
 ### 🏭 **Solar ↑ → Consumption ↑ (F=156.2)**
 
@@ -534,8 +559,6 @@ START: Analysiere deine Zeitreihe
 **Test mit VAR:** Solar → Consumption ist signifikant (auch nach Kontrolle für Tageszeit)  
 → **Hybride Erklärung:** Preissignal + Tageszeit + Smart Response
 
----
-
 ### 💨 **Wind ↔ Price (Bidirektional, F=298.7)**
 
 **Komplexe Wechselwirkung:**
@@ -552,8 +575,6 @@ START: Analysiere deine Zeitreihe
   - → Ökonomische Entscheidung, nicht meteorologisch!
 
 **Lesson:** Granger-Kausalität ≠ physikalische Kausalität!
-
----
 
 ### 🔗 **Kointegration: Langfristige Gleichgewichte**
 
@@ -575,8 +596,6 @@ Interpretation:
 - Langfristig: Es gibt Gleichgewichte (Regression to Mean)
 - **Praktisch:** Für Day-Ahead-Forecasts (24h) → Kointegration hilft wenig
 
----
-
 ### 📊 VAR-Modell: Kann man Kausalität nutzen?
 
 **Ernüchternde Ergebnisse:**
@@ -589,56 +608,58 @@ Interpretation:
 
 **Warum hilft Kausalität nicht beim Forecasting?**
 
-1. **VAR ist linear, Märkte sind nicht-linear**
-   - Merit Order: Stufen-Funktion, keine Gerade
-   - Curtailment: Schwellenwert-Effekt bei negativen Preisen
-   - VAR erfasst das nicht!
+**1. VAR ist linear, Märkte sind nicht-linear**
+- Merit Order: Stufen-Funktion, keine Gerade
+- Curtailment: Schwellenwert-Effekt bei negativen Preisen
+- VAR erfasst das nicht!
 
-2. **Lag 24 zu lang für kurzfristige Dynamik**
-   - Price-Spikes entstehen in Minuten
-   - VAR mit 24h-Lag ist zu träge
-   - Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität
+**2. Lag 24 zu lang für kurzfristige Dynamik**
+- Price-Spikes entstehen in Minuten
+- VAR mit 24h-Lag ist zu träge
+- Braucht kürzere Lags (1-3h), aber dann fehlt Saisonalität
 
-3. **Fehlende exogene Faktoren**
-   - Wetter (dominant für Solar/Wind!)
-   - Marktevents (z.B. Kraftwerksausfälle)
-   - Policy (z.B. CO2-Preis-Änderungen)
+**3. Fehlende exogene Faktoren**
+- Wetter (dominant für Solar/Wind!)
+- Marktevents (z.B. Kraftwerksausfälle)
+- Policy (z.B. CO2-Preis-Änderungen)
 
 **Kritischer Insight:**
 - **Granger-Kausalität ist DESKRIPTIV** (zeigt Zusammenhänge)
 - **Aber nicht PRÄDIKTIV** (hilft nicht beim Forecasting)
 - Univariate Modelle mit guten Features (lag_1, diff_1, hour) schlagen VAR
 
----
-
 ### 🎯 Praktische Implikationen für Energy Trading
 
 **Was haben wir gelernt?**
 
-1. **Merit Order funktioniert!**
-   - Solar/Wind hoch → Price runter (F=847.3)
-   - Für Trader: Monitor Solar-Forecast für Price-Prognose
+**1. Merit Order funktioniert!**
+- Solar/Wind hoch → Price runter (F=847.3)
+- Für Trader: Monitor Solar-Forecast für Price-Prognose
 
-2. **Demand Response ist real**
-   - Price hoch → Consumption runter (F=234.5)
-   - Für Grid Operators: Preissignale steuern Nachfrage
+**2. Demand Response ist real**
+- Price hoch → Consumption runter (F=234.5)
+- Für Grid Operators: Preissignale steuern Nachfrage
 
-3. **Curtailment ist ökonomisch, nicht physisch**
-   - Price negativ → Wind "sinkt" (Abregelung)
-   - Für Policy: Speicher-Incentives reduzieren Curtailment
+**3. Curtailment ist ökonomisch, nicht physisch**
+- Price negativ → Wind "sinkt" (Abregelung)
+- Für Policy: Speicher-Incentives reduzieren Curtailment
 
-4. **VAR ist nicht die Lösung**
-   - Non-Linearity, fehlende Exogene
-   - **Besser:** Univariate ML/DL + exogene Features
-   - **Alternativ:** ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)
+**4. VAR ist nicht die Lösung**
+- Non-Linearity, fehlende Exogene
+- **Besser:** Univariate ML/DL + exogene Features
+- **Alternativ:** ML-basierte Multivariate (XGBoost mit Cross-Series-Lags)
 
-5. **Kointegration zeigt langfristige Trends**
-   - Für strategische Planung (Investitionen)
-   - Nicht für operatives Forecasting (Day-Ahead)
+**5. Kointegration zeigt langfristige Trends**
+- Für strategische Planung (Investitionen)
+- Nicht für operatives Forecasting (Day-Ahead)
 
 **Key Takeaway:**  
 Kausalität verstehen → bessere Features bauen → bessere univariate Modelle!  
 Nicht: Kausalität → VAR → schlechte Forecasts
+
+---
+
+# TEIL 3: KRITISCHE DISKUSSION & LESSONS LEARNED
 
 ---
 
