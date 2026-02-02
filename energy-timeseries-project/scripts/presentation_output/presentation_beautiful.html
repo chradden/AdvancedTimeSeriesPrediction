@@ -336,73 +336,200 @@ val:   2023-07-01 bis 2023-12-31  (20%)
 test:  2024-01-01 bis 2024-12-31  (20%)
 </code></pre>
 <p><strong>Wichtig:</strong> Walk-Forward Validation für Production-Deployment!</p></div>
-        <div class="slide"><h2>Slide 3: Data Quality Issues - Der Wind Offshore Problemfall</h2>
-<h3>⚠️ Strukturbruch: 9.8-Monate Stillstand</h3>
-<p><img alt="Wind Offshore mit Outage" src="figures/wind_offshore_timeline_clean.png" /></p>
-<p><strong>Problem:</strong><br />
-- <strong>Periode:</strong> 2023-04-15 22:00 bis 2024-01-30 10:00<br />
-- <strong>Dauer:</strong> 9.8 Monate (290 Tage)<br />
-- <strong>Impact:</strong> 37.9% der Daten sind Nullen oder Missing<br />
-- <strong>Grund:</strong> Wartung oder technische Probleme (nicht dokumentiert)</p>
-<h3>🛠️ Lösungsstrategien</h3>
-<h4>Option 1: <strong>Ignoriere Stillstand im Training</strong></h4>
-<pre><code class="language-python"># Maskiere Nullen im Training-Set
-train_mask = (df['wind_offshore'] &gt; 0) | (df.index &lt; outage_start)
-X_train_masked = X_train[train_mask]
-</code></pre>
-<p><strong>Risiko:</strong> Modell kann keine Stillstände vorhersagen!</p>
-<h4>Option 2: <strong>Separate Outage-Prediction</strong></h4>
-<ol>
-<li>Binary Classifier: "Läuft Anlage?" (Ja/Nein)</li>
-<li>Falls Ja → Regressionsmodell für MW<br />
-<strong>Besser für Production!</strong></li>
-</ol>
-<h4>Option 3: <strong>Feature Engineering</strong></h4>
-<ul>
-<li><code>days_since_last_production</code></li>
-<li><code>consecutive_zeros</code></li>
-<li><code>is_in_outage_season</code></li>
-</ul>
-<p><strong>Unsere Wahl:</strong> Option 1 für Testing, Option 2 für Production</p>
-<h3>📊 Impact auf Modelle</h3>
+        <div class="slide"><h2>Slide 3: Modell-Portfolio - 15 Modelle im Benchmark</h2>
+<h3>🎯 Getestete Modellarchitekturen</h3>
+<p>Wir haben <strong>15 verschiedene Modelle</strong> über <strong>5 Zeitreihen</strong> getestet (= 75 Experimente!)</p>
+<h3>📊 Modell-Kategorien</h3>
+<h4>1️⃣ <strong>Machine Learning Tree Models</strong> (Standard Python Pipeline)</h4>
 <table>
 <thead>
 <tr>
 <th>Modell</th>
-<th>R² (mit Stillstand)</th>
-<th>R² (bereinigt)</th>
-<th>Delta</th>
+<th>Typ</th>
+<th>Training Umgebung</th>
+<th>Stärken</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>XGBoost</td>
-<td>-36.4 ❌</td>
-<td>~0.85</td>
-<td><strong>+36.4 Punkte!</strong></td>
+<td><strong>XGBoost</strong></td>
+<td>Gradient Boosting</td>
+<td>Lokal (CPU)</td>
+<td>Feature-rich, robust</td>
 </tr>
 <tr>
-<td>SARIMA</td>
-<td>-45.2 ❌</td>
-<td>~0.10</td>
-<td>+45.2</td>
+<td><strong>LightGBM</strong></td>
+<td>Gradient Boosting</td>
+<td>Lokal (CPU)</td>
+<td>Schnell, memory-effizient</td>
 </tr>
 <tr>
-<td>VAR</td>
-<td>-36.2 ❌</td>
-<td>-0.26</td>
-<td>+35.9</td>
+<td><strong>Random Forest</strong></td>
+<td>Ensemble</td>
+<td>Lokal (CPU)</td>
+<td>Chaos-resistent, keine Hyperparameter</td>
+</tr>
+<tr>
+<td><strong>CatBoost</strong></td>
+<td>Gradient Boosting</td>
+<td>Lokal (CPU)</td>
+<td>Kategorische Features</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Key Lesson:</strong> Data Quality &gt; Model Complexity!</p></div>
+<p><strong>Features:</strong> 31 engineered features (lags, rolling stats, temporal)</p></div>
+        <div class="slide"><h4>2️⃣ <strong>Deep Learning Models - Standard</strong> (Extended Testing Colab GPU T4)</h4>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>Architektur</th>
+<th>Parameter</th>
+<th>Training Zeit</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LSTM</strong></td>
+<td>Recurrent</td>
+<td>~50K</td>
+<td>20-30s</td>
+<td>Sequenzen</td>
+</tr>
+<tr>
+<td><strong>GRU</strong></td>
+<td>Recurrent (vereinfacht)</td>
+<td>~35K</td>
+<td>15-25s</td>
+<td>Unidirektional, schneller</td>
+</tr>
+<tr>
+<td><strong>Bi-LSTM</strong></td>
+<td>Bidirektional</td>
+<td>~100K</td>
+<td>30-60s</td>
+<td>Symmetrische Patterns</td>
+</tr>
+</tbody>
+</table></div>
+        <div class="slide"><h4>3️⃣ <strong>Deep Learning Models - Generative</strong> (Extended Testing Colab GPU T4)</h4>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>Typ</th>
+<th>Parameter</th>
+<th>Training Zeit</th>
+<th>Komplexität</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Autoencoder</strong></td>
+<td>Encoder-Decoder</td>
+<td>~80K</td>
+<td>40-80s</td>
+<td>Feature Learning</td>
+</tr>
+<tr>
+<td><strong>VAE</strong></td>
+<td>Variational</td>
+<td>~100K</td>
+<td>60-190s</td>
+<td>Probabilistisch</td>
+</tr>
+</tbody>
+</table></div>
+        <div class="slide"><h4>4️⃣ <strong>Deep Learning Models - State-of-the-Art</strong> (Extended Testing Colab GPU T4)</h4>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>Paper</th>
+<th>Parameter</th>
+<th>Training Zeit</th>
+<th>Spezialisierung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>N-BEATS</strong></td>
+<td>2020 (Oreshkin et al.)</td>
+<td>~200K</td>
+<td>700-2000s</td>
+<td>Univariate Decomposition</td>
+</tr>
+<tr>
+<td><strong>N-HiTS</strong></td>
+<td>2022 (Challu et al.)</td>
+<td>~180K</td>
+<td>100-350s</td>
+<td>Hierarchical Interpolation</td>
+</tr>
+<tr>
+<td><strong>DeepAR</strong></td>
+<td>2017 (Amazon)</td>
+<td>~120K</td>
+<td>100-370s</td>
+<td>Probabilistic Forecasting</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Erwartung:</strong> SOTA-Modelle sollten gewinnen → <strong>Tatsächlich:</strong> Alle negativ! ❌</p></div>
+        <div class="slide"><h4>5️⃣ <strong>Statistische Modelle</strong> (Baseline Vergleich)</h4>
+<table>
+<thead>
+<tr>
+<th>Modell</th>
+<th>Typ</th>
+<th>Annahmen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SARIMA</strong></td>
+<td>Univariate Time Series</td>
+<td>Stationarität, Linearität</td>
+</tr>
+<tr>
+<td><strong>VAR</strong></td>
+<td>Multivariate Vector AR</td>
+<td>Linearität, Lag-Struktur</td>
+</tr>
+<tr>
+<td><strong>VECM</strong></td>
+<td>Kointegration</td>
+<td>Langfristige Gleichgewichte</td>
+</tr>
+</tbody>
+</table></div>
+        <div class="slide"><h3>🎭 Wichtige Erkenntnisse</h3>
+<ol>
+<li>
+<p><strong>SOTA ≠ Best Performance</strong><br />
+   N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)</p>
+</li>
+<li>
+<p><strong>GPU ≠ Bessere Ergebnisse</strong><br />
+   Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)</p>
+</li>
+<li>
+<p><strong>Komplexität ≠ Accuracy</strong><br />
+   GRU (35K Parameter) &gt; Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen</p>
+</li>
+<li>
+<p><strong>Training Time Paradox</strong><br />
+   Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)</p>
+</li>
+</ol>
+<p><strong>Key Lesson:</strong> Benchmarke IMMER selbst! Papers ≠ Production Reality</p></div>
         <div class="slide"><h1>TEIL 2: MODELL-PERFORMANCE NACH ZEITREIHEN</h1></div>
         <div class="slide"><h2>Slide 4: Solar - Der DL Showcase (Beste Ergebnisse)</h2>
 <h3>📈 Solar Zeitreihe 2022-2024</h3>
 <p><img alt="Solar Timeline" src="figures/solar_timeline_clean.png" /></p>
 <p><em>Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534</em></p>
 <h3>📊 Performance Overview</h3>
-<p><img alt="Solar Model Comparison" src="figures/solar_extended_09_final_comparison.png" /></p>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -525,7 +652,6 @@ X_train_masked = X_train[train_mask]
 <p><img alt="Wind Onshore Timeline" src="figures/wind_onshore_timeline_clean.png" /></p>
 <p><em>Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)</em></p>
 <h3>📊 Performance Overview</h3>
-<p><img alt="Wind Onshore Comparison" src="figures/wind_onshore_extended_09_final_comparison.png" /></p>
 <h4>ML Tree Models - DOMINANZ</h4>
 <table>
 <thead>
@@ -657,7 +783,6 @@ X_train_masked = X_train[train_mask]
 <p><img alt="Wind Offshore Timeline" src="figures/wind_offshore_timeline_clean.png" /></p>
 <p><em>Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte</em></p>
 <h3>📊 Performance Overview (nach Data Cleaning)</h3>
-<p><img alt="Wind Offshore Comparison" src="figures/wind_offshore_09_comparison.png" /></p>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -836,7 +961,6 @@ X_train_masked = X_train[train_mask]
 <p><img alt="Consumption Timeline" src="figures/consumption_timeline_clean.png" /></p>
 <p><em>Charakteristik: Stabile Muster, niedrigste Volatilität (CV=0.175), klare Wochen-/Tageszyklen</em></p>
 <h3>📊 Performance Overview</h3>
-<p><img alt="Consumption Comparison" src="figures/consumption_extended_09_final_comparison.png" /></p>
 <h4>ML Tree Models (Standard-Pipeline)</h4>
 <table>
 <thead>
@@ -967,7 +1091,6 @@ X_train_masked = X_train[train_mask]
 <p><img alt="Price Timeline" src="figures/price_timeline_clean.png" /></p>
 <p><em>Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh</em></p>
 <h3>📊 Performance Overview</h3>
-<p><img alt="Price Model Comparison" src="figures/price_extended_09_final_comparison.png" /></p>
 <h4>ML Tree Models - STARK</h4>
 <table>
 <thead>
@@ -1510,12 +1633,11 @@ Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
     
     <div class="controls">
         <button onclick="prevSlide()" title="Vorherige Folie (←)">◀ Zurück</button>
-        <button onclick="toggleFullscreen()" title="Vollbild (F)">⛶ Vollbild</button>
         <button onclick="nextSlide()" title="Nächste Folie (→)">Weiter ▶</button>
     </div>
     
     <div class="slide-number">
-        <span id="current">1</span> / <span id="total">25</span>
+        <span id="current">1</span> / <span id="total">30</span>
     </div>
     
     <script>
@@ -1541,18 +1663,6 @@ Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
         
         function nextSlide() { showSlide(currentSlide + 1); }
         function prevSlide() { showSlide(currentSlide - 1); }
-        Fullscreen function
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log('Fullscreen error:', err);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
         
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
@@ -1570,11 +1680,6 @@ Nicht: Kausalität → VAR → schlechte Forecasts</p></div>
             }
             if (e.key === 'End') {
                 e.preventDefault();
-                showSlide(totalSlides - 1);
-            }
-            if (e.key === 'f' || e.key === 'F') {
-                e.preventDefault();
-                toggleFullscreen(
                 showSlide(totalSlides - 1);
             }
         });

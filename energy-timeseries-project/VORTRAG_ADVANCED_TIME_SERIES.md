@@ -96,49 +96,83 @@ test:  2024-01-01 bis 2024-12-31  (20%)
 
 ---
 
-## Slide 3: Data Quality Issues - Der Wind Offshore Problemfall
+## Slide 3: Modell-Portfolio - 15 Modelle im Benchmark
 
-### ⚠️ Strukturbruch: 9.8-Monate Stillstand
+### 🎯 Getestete Modellarchitekturen
 
-![Wind Offshore mit Outage](results/figures/wind_offshore_timeline_clean.png)
+Wir haben **15 verschiedene Modelle** über **5 Zeitreihen** getestet (= 75 Experimente!)
 
-**Problem:**
-- **Periode:** 2023-04-15 22:00 bis 2024-01-30 10:00
-- **Dauer:** 9.8 Monate (290 Tage)
-- **Impact:** 37.9% der Daten sind Nullen oder Missing
-- **Grund:** Wartung oder technische Probleme (nicht dokumentiert)
+### 📊 Modell-Kategorien
 
-### 🛠️ Lösungsstrategien
+#### 1️⃣ **Machine Learning Tree Models** (Standard Python Pipeline)
 
-#### Option 1: **Ignoriere Stillstand im Training**
-```python
-# Maskiere Nullen im Training-Set
-train_mask = (df['wind_offshore'] > 0) | (df.index < outage_start)
-X_train_masked = X_train[train_mask]
-```
-**Risiko:** Modell kann keine Stillstände vorhersagen!
+| Modell | Typ | Training Umgebung | Stärken |
+|--------|-----|-------------------|---------|
+| **XGBoost** | Gradient Boosting | Lokal (CPU) | Feature-rich, robust |
+| **LightGBM** | Gradient Boosting | Lokal (CPU) | Schnell, memory-effizient |
+| **Random Forest** | Ensemble | Lokal (CPU) | Chaos-resistent, keine Hyperparameter |
+| **CatBoost** | Gradient Boosting | Lokal (CPU) | Kategorische Features |
 
-#### Option 2: **Separate Outage-Prediction**
-1. Binary Classifier: "Läuft Anlage?" (Ja/Nein)
-2. Falls Ja → Regressionsmodell für MW
-**Besser für Production!**
+**Features:** 31 engineered features (lags, rolling stats, temporal)
 
-#### Option 3: **Feature Engineering**
-- `days_since_last_production`
-- `consecutive_zeros`
-- `is_in_outage_season`
+---
 
-**Unsere Wahl:** Option 1 für Testing, Option 2 für Production
+#### 2️⃣ **Deep Learning Models - Standard** (Extended Testing Colab GPU T4)
 
-### 📊 Impact auf Modelle
+| Modell | Architektur | Parameter | Training Zeit | Use Case |
+|--------|-------------|-----------|---------------|----------|
+| **LSTM** | Recurrent | ~50K | 20-30s | Sequenzen |
+| **GRU** | Recurrent (vereinfacht) | ~35K | 15-25s | Unidirektional, schneller |
+| **Bi-LSTM** | Bidirektional | ~100K | 30-60s | Symmetrische Patterns |
 
-| Modell | R² (mit Stillstand) | R² (bereinigt) | Delta |
-|--------|---------------------|----------------|-------|
-| XGBoost | -36.4 ❌ | ~0.85 | **+36.4 Punkte!** |
-| SARIMA | -45.2 ❌ | ~0.10 | +45.2 |
-| VAR | -36.2 ❌ | -0.26 | +35.9 |
+---
 
-**Key Lesson:** Data Quality > Model Complexity!
+#### 3️⃣ **Deep Learning Models - Generative** (Extended Testing Colab GPU T4)
+
+| Modell | Typ | Parameter | Training Zeit | Komplexität |
+|--------|-----|-----------|---------------|-------------|
+| **Autoencoder** | Encoder-Decoder | ~80K | 40-80s | Feature Learning |
+| **VAE** | Variational | ~100K | 60-190s | Probabilistisch |
+
+---
+
+#### 4️⃣ **Deep Learning Models - State-of-the-Art** (Extended Testing Colab GPU T4)
+
+| Modell | Paper | Parameter | Training Zeit | Spezialisierung |
+|--------|-------|-----------|---------------|-----------------|
+| **N-BEATS** | 2020 (Oreshkin et al.) | ~200K | 700-2000s | Univariate Decomposition |
+| **N-HiTS** | 2022 (Challu et al.) | ~180K | 100-350s | Hierarchical Interpolation |
+| **DeepAR** | 2017 (Amazon) | ~120K | 100-370s | Probabilistic Forecasting |
+
+**Erwartung:** SOTA-Modelle sollten gewinnen → **Tatsächlich:** Alle negativ! ❌
+
+---
+
+#### 5️⃣ **Statistische Modelle** (Baseline Vergleich)
+
+| Modell | Typ | Annahmen |
+|--------|-----|----------|
+| **SARIMA** | Univariate Time Series | Stationarität, Linearität |
+| **VAR** | Multivariate Vector AR | Linearität, Lag-Struktur |
+| **VECM** | Kointegration | Langfristige Gleichgewichte |
+
+---
+
+### 🎭 Wichtige Erkenntnisse
+
+1. **SOTA ≠ Best Performance**  
+   N-BEATS/N-HiTS: Alle 5 Zeitreihen negativ (R² von -100 bis -18!)
+
+2. **GPU ≠ Bessere Ergebnisse**  
+   Random Forest (CPU, 50s) schlägt N-BEATS (GPU, 2000s)
+
+3. **Komplexität ≠ Accuracy**  
+   GRU (35K Parameter) > Bi-LSTM (100K Parameter) bei 3/5 Zeitreihen
+
+4. **Training Time Paradox**  
+   Schnellste Modelle (GRU ~15s) oft besser als langsamste (N-BEATS ~2000s)
+
+**Key Lesson:** Benchmarke IMMER selbst! Papers ≠ Production Reality
 
 ---
 
@@ -155,8 +189,6 @@ X_train_masked = X_train[train_mask]
 *Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534*
 
 ### 📊 Performance Overview
-
-![Solar Model Comparison](results/figures/solar_extended_09_final_comparison.png)
 
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -198,8 +230,6 @@ X_train_masked = X_train[train_mask]
 *Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)*
 
 ### 📊 Performance Overview
-
-![Wind Onshore Comparison](results/figures/wind_onshore_extended_09_final_comparison.png)
 
 #### ML Tree Models - DOMINANZ
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -243,8 +273,6 @@ X_train_masked = X_train[train_mask]
 *Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte*
 
 ### 📊 Performance Overview (nach Data Cleaning)
-
-![Wind Offshore Comparison](results/figures/wind_offshore_09_comparison.png)
 
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
@@ -309,8 +337,6 @@ X_train_masked = X_train[train_mask]
 
 ### 📊 Performance Overview
 
-![Consumption Comparison](results/figures/consumption_extended_09_final_comparison.png)
-
 #### ML Tree Models (Standard-Pipeline)
 | Rang | Modell | RMSE (MW) | MAPE (%) | R² | Kategorie |
 |------|--------|-----------|----------|-----|-----------|
@@ -352,8 +378,6 @@ X_train_masked = X_train[train_mask]
 *Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh*
 
 ### 📊 Performance Overview
-
-![Price Model Comparison](results/figures/price_extended_09_final_comparison.png)
 
 #### ML Tree Models - STARK
 | Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Kategorie |
