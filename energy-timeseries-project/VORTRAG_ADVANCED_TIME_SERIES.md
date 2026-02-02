@@ -208,13 +208,28 @@
 
 ![Price Model Comparison](results/figures/price_extended_09_final_comparison.png)
 
+#### ML Tree Models - STARK
 | Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Kategorie |
 |------|--------|----------------|-----|-----|-----------|
 | 🥇 | **LightGBM** | **10.03** | **1.76** | **0.9798** | ML Tree |
 | 🥈 | Random Forest | 10.60 | 1.14 | 0.9775 | ML Tree |
 | 🥉 | XGBoost | 11.48 | 1.63 | 0.9736 | ML Tree |
-| 4 | **LSTM (Optimized)** | **~15-20** | **~3-5** | **~0.95** | Deep Learning |
-| ... | Naive | 74.21 | 42.71 | -0.10 | Baseline |
+
+#### Deep Learning Models (Extended Testing - Colab GPU T4)
+| Rang | Modell | RMSE (EUR/MWh) | MAE | R² | Training Zeit |
+|------|--------|----------------|-----|-----|---------------|
+| 1 | **GRU** 🏆 | **23.43** | **11.72** | **0.8906** | 25.7s |
+| 2 | **Bi-LSTM** | 23.99 | 11.06 | 0.8853 | 172.3s |
+| 3 | **LSTM** | 27.47 | 14.88 | 0.8496 | 22.9s |
+| 4 | **Autoencoder** | 37.47 | 19.38 | 0.7202 | 187.4s |
+| 5 | **VAE** | 47.00 | 23.93 | 0.5597 | 187.0s |
+| ❌ | DeepAR | 103.70 | 71.57 | **-1.1557** | 366.5s |
+| ❌ | N-BEATS | 144.06 | 125.30 | **-3.1599** | 2131.4s |
+| ❌ | N-HiTS | 153.85 | 128.26 | **-3.7446** | 334.6s |
+
+**Baseline:** Naive Forecast - RMSE 74.21, MAE 42.71, R² = -0.10
+
+**✅ Alle 8 DL-Modelle getestet!** GRU beste DL-Lösung, aber 9% schlechter als LightGBM!
 
 ### 🎯 Was macht Price besonders?
 
@@ -230,11 +245,31 @@
 3. `momentum_3h` - Kurzfristige Trends
 4. `rolling_std_3` - Volatilitäts-Indikator
 
-**Kritischer Punkt:** ML-Modelle sehen `lag_1` und lernen "Preis ändert sich wenig"  
-→ **Smoothing-Effekt:** Spikes werden unterschätzt!  
-→ **Bessere Metrik wäre:** Hit-Rate für Spike-Detection (>200 EUR/MWh)
+**Kritischer Punkt:** 
+- ML-Modelle sehen `lag_1` und lernen "Preis ändert sich wenig" → Smoothing-Effekt
+- **DL R²=0.8906 vs ML R²=0.9798** → **9% Gap zugunsten ML!**
+- Spikes werden von allen Modellen unterschätzt!  
+- → **Bessere Metrik wäre:** Hit-Rate für Spike-Detection (>200 EUR/MWh)
 
-**LSTM Status:** 🚧 Platzhalter - Notebook in Entwicklung
+### 🔍 Kritische Analyse: Price vs andere Zeitreihen
+
+| Metrik | Price | Solar | Consumption | Wind Onshore |
+|--------|-------|-------|-------------|--------------|
+| **Bestes ML R²** | **0.9798** (LightGBM) | 0.9838 | 0.95 | 0.9997 |
+| **Bestes DL R²** | 0.8906 (GRU) | 0.9955 | 0.9874 | 0.9548 |
+| **ML vs DL Gap** | **-9%** (ML gewinnt) | +1.2% (DL) | +3.7% (DL) | -4.7% (ML) |
+| **Volatilität (CV)** | **0.85** 🔥 | 0.31 | ~0.15 | ~0.30 |
+
+**💡 Key Insight:**
+- **Hohe Volatilität (CV=0.85) → DL versagt (-9% Gap!)**
+- Price verhält sich wie Wind Onshore (beide chaotisch)
+- **SOTA-Modelle wieder katastrophal:** N-BEATS R²=-3.16, N-HiTS R²=-3.74
+- **GRU schlägt Bi-LSTM** (0.8906 vs 0.8853), wie bei Consumption!
+
+**Pattern:** 
+- **Deterministische Zeitreihen** (Solar, Consumption) → DL gewinnt
+- **Chaotische Zeitreihen** (Price, Wind) → ML gewinnt
+- **GRU > Bi-LSTM** bei chaotischen Patterns (schneller & robuster)
 
 ---
 
@@ -576,13 +611,13 @@ GPU-Aufwand (23s Training, OK)
 
 ### 📊 Performance-Matrix: Cross-Series Vergleich
 
-| Architektur | Solar R² | Consumption R² | Wind Onshore R² | Best Use Case |
-|-------------|----------|----------------|-----------------|---------------|
-| **Bi-LSTM** | **0.9955** 🏆 | 0.9799 | ~0.87* ❌ | Symmetrische seq. Patterns (Solar!) |
-| **GRU** | ~0.993* | **0.9874** 🏆 | ~0.88* | Unidirektionale Patterns (Consumption!) |
-| **LSTM** | 0.9934 | 0.9772 | 0.9548 ⚠️ | Mittlere seq. Patterns |
-| **Random Forest** | 0.9825 | ~0.93 | **0.9997** 🏆 | Stochastische Daten (Wind!) |
-| **LightGBM** | 0.9838 | ~0.95 | 0.9994 | Universell stark |
+| Architektur | Solar R² | Consumption R² | Wind Onshore R² | Price R² | Best Use Case |
+|-------------|----------|----------------|-----------------|----------|---------------|
+| **Bi-LSTM** | **0.9955** 🏆 | 0.9799 | 0.9522 | 0.8853 | Symmetrische seq. Patterns (Solar!) |
+| **GRU** | 0.9813 | **0.9874** 🏆 | 0.9532 | **0.8906** 🏆 | Unidirektionale/volatile Patterns |
+| **LSTM** | 0.9934 | 0.9772 | 0.9548 | 0.8496 | Mittlere seq. Patterns |
+| **Random Forest** | 0.9825 | ~0.93 | **0.9997** 🏆 | 0.9775 | Stochastische Daten (Wind!) |
+| **LightGBM** | 0.9838 | ~0.95 | 0.9994 | **0.9798** 🏆 | Universell stark, besonders volatil |
 | **XGBoost** | 0.9838 | ~0.94 | 0.9995 | Feature-rich data |
 | **N-BEATS** | -18.93 ❌ | -0.94 ❌ | ? | ❌ Versagt überall |
 | **N-HiTS** | -4.22 ❌ | -9.58 ❌❌ | ? | ❌ Noch schlimmer |
@@ -659,14 +694,15 @@ START: Analysiere deine Zeitreihe
 
 ---
 
-#### Archetyp 4: **Volatil-Strukturiert** (Price - noch zu testen) 💰
+#### Archetyp 4: **Volatil-Strukturiert** (Price) 💰
 **Eigenschaften:**
 - ⚠️ Mittlere Periodizität
-- 🔥 Hohe Spikes & Volatilität
-- ⚠️ Strukturbrüche
+- 🔥 Hohe Spikes & Volatilität (CV=0.85!)
+- ⚠️ Strukturbrüche (Negative Preise)
 
-**Erwartung:** LightGBM (R²~0.98)  
-**DL-Potential:** Fraglich (Spikes schwer zu lernen)
+**Best Model:** LightGBM (R²=0.9798)  
+**Why:** Features (lag_1, diff_1) besser als Sequences  
+**DL Performance:** GRU R²=0.8906 ❌ (-9% Gap!)
 
 ### 🔬 Key Insights aus 3 Zeitreihen
 
@@ -704,12 +740,14 @@ START: Analysiere deine Zeitreihe
 |-----------|-----------|-----------|-----|-----------|
 | **Consumption** | GRU 0.9874 | LightGBM 0.95 | **+3.7%** | ✅ JA! |
 | **Solar** | Bi-LSTM 0.9955 | LightGBM 0.9838 | +1.2% | ⚠️ Marginal |
+| **Price** | GRU 0.8906 | LightGBM 0.9798 | **-9%** | ❌ NEIN! |
 | **Wind Onshore** | LSTM 0.9548 | RF 0.9997 | **-4.7%** | ⚠️ Grenzfall |
 
 **Pattern erkannt:**
 - Gap > 3%: DL klar lohnend (Consumption)
 - Gap 1-2%: DL optional (Solar - GPU nötig)
-- Gap < 0%: DL versagt (Wind - nicht verwenden!)
+- Gap -5% bis 0%: DL Grenzfall (Wind Onshore)
+- Gap < -5%: DL versagt (Price -9% - nicht verwenden!)
 
 ### 🔬 Offene Fragen für Advanced-Diskussion
 
@@ -738,8 +776,9 @@ START: Analysiere deine Zeitreihe
 - ✅ **Solar:** Bi-LSTM R²=0.9955 (Archetyp 1: Symmetrisch)
 - ✅ **Consumption:** GRU R²=0.9874 (Archetyp 2: Sequenziell) 🆕
 - ⚠️ **Wind Onshore:** LSTM R²=0.9548 (Archetyp 3: Chaotisch, aber respektabel)
-- 🚧 **Wind Offshore, Price:** In Entwicklung
-- 💡 **Hypothese Price:** Archetyp 4 → LightGBM gewinnt (Spikes zu hart für DL)
+- ✅ **Price:** GRU R²=0.8906 (Archetyp 4: Volatil, DL versagt -9%) 🆕
+- 🚧 **Wind Offshore:** In Entwicklung
+- 💡 **Hypothese bestätigt:** Price → LightGBM gewinnt (Spikes zu hart für DL!)
 
 ---
 
@@ -799,27 +838,29 @@ START: Analysiere deine Zeitreihe
 - Missing Data, Stillstände, Strukturbrüche **müssen** erkannt werden
 - → **Invest more in EDA!**
 
-#### 2. **Deep Learning ist NICHT universell - 4 Archetypen!** 🎭
+#### 2. **Deep Learning ist NICHT universell - 4 Archetypen getestet!** 🎭
 - **Solar (Archetyp 1):** Bi-LSTM R²=0.9955 > LightGBM 0.9838 (+1.2%) ✅
 - **Consumption (Archetyp 2):** GRU R²=0.9874 > LightGBM 0.95 (+3.7%) ✅✅
 - **Wind Onshore (Archetyp 3):** LSTM R²=0.9548 << RF 0.9997 (-4.7%) ⚠️
+- **Price (Archetyp 4):** GRU R²=0.8906 << LightGBM 0.9798 (-9%) ❌
 - **Pattern:** Je schwächer ML, desto mehr hilft DL!
 - → **Prüfe ACF UND ML-Baseline BEVOR du DL nutzt!**
 
 #### 3. **GRU ist der unterschätzte Champion - oft besser als Bi-LSTM!** 🆕
-- Consumption: GRU 0.9874 > Bi-LSTM 0.9799 (+0.75%)
-- 2x schneller (25s vs 55s), einfacher (2 Gates statt 4)
-- Unidirektionale Patterns (Wochenablauf) → GRU optimal
+- **Consumption:** GRU 0.9874 > Bi-LSTM 0.9799 (+0.75%)
+- **Price:** GRU 0.8906 > Bi-LSTM 0.8853 (+0.53%)
+- 2-7x schneller (25s vs 55-172s), einfacher (2 Gates statt 4)
+- Unidirektionale & volatile Patterns → GRU optimal
 - → **Probiere GRU BEVOR du zu Bi-LSTM greifst!**
 - Wind Onshore: R²=0.9997 (besser als jedes DL-Modell!)
 - Robust gegen Stochastizität, kein GPU nötig
 - Oft besser als "fancy" Modelle bei chaotischen Daten
 - → **Immer als Baseline testen!**
-
-#### 5. **"State-of-the-Art" Modelle versagen KONSISTENT** ❌❌
-- N-BEATS: -18.93 (Solar), -0.94 (Consumption)
-- N-HiTS: -4.22 (Solar), **-9.58** (Consumption)
-- DeepAR: -1.24 (Consumption)
+ bei Energy Data** ❌❌
+- **N-BEATS:** -18.93 (Solar), -0.94 (Consumption), -4.63 (Wind), **-3.16 (Price)**
+- **N-HiTS:** -4.22 (Solar), -9.58 (Consumption), -1.02×10²⁰¹ (Wind), **-3.74 (Price)**
+- **DeepAR:** -1.24 (Consumption), -1.03 (Wind), **-1.16 (Price)**
+- **Konsistenz:** Alle SOTA-Modelle versagen bei ALLEN 4 getestet
 - **Konsistenz:** Alle SOTA-Modelle versagen bei beiden Zeitreihen!
 - Grund: Univariat optimiert, keine Features, falsche Domain
 - → **SOTA ≠ Beste Lösung - immer selbst benchmarken!**
@@ -866,8 +907,8 @@ START: Analysiere deine Zeitreihe
 1. ✅ **Solar Bi-LSTM:** Abgeschlossen (R²=0.9955) - Archetyp 1 Champion!
 2. ✅ **Consumption GRU:** Abgeschlossen (R²=0.9874) - Archetyp 2 Champion! 🆕
 3. ✅ **Wind Onshore:** Getestet, 8 DL-Modelle (LSTM R²=0.9548 vs RF 0.9997, SOTA versagt)
-4. 🚧 **Wind Offshore:** DL-Testing ausstehend (ähnlich Wind Onshore erwartet)
-5. 🚧 **Price:** DL-Testing ausstehend (Spikes → evtl. DL hilft nicht)
+4. ✅ **Price:** Getestet, 8 DL-Modelle (GRU R²=0.8906 vs LightGBM 0.9798, -9% Gap!) 🆕
+5. 🚧 **Wind Offshore:** DL-Testing ausstehend (ähnlich Wind Onshore erwartet)
 6. 🎯 **GRU-First Strategy:** GRU als Default für neue Zeitreihen testen
 7. 🔄 **Ensemble:** GRU + LightGBM kombinieren (temporal + features)
 8. 📊 **ACF-Based Routing:** Automatische Modellwahl basierend auf ACF
