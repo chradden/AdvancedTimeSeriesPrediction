@@ -32,6 +32,10 @@
 | **Consumption** | 26.257 | 2022-2024 | SMARD/ENTSO-E | MW |
 | **Price (Day-Ahead)** | 26.257 | 2022-2024 | EPEX Spot | EUR/MWh |
 
+### 📈 Zeitreihen-Übersicht
+
+![Alle Zeitreihen](results/figures/all_timeseries_overview.png)
+
 ### 🎯 Herausforderungen
 - **Hohe Volatilität:** CV von 0.31 (Solar) bis 0.85 (Price)
 - **Saisonalität:** Multiple Patterns (täglich, wöchentlich, jährlich)
@@ -97,7 +101,13 @@
 
 ## Slide 4: Solar - Der ML Showcase (Beste Ergebnisse)
 
-### 📊 Performance Overview
+### � Solar Zeitreihe 2022-2024
+
+![Solar Timeline](results/figures/solar_timeline_clean.png)
+
+*Charakteristik: Symmetrische Tagesverläufe, Winter-Sommer-Kontrast, CV=1.534*
+
+### �📊 Performance Overview
 
 ![Solar Model Comparison](results/figures/solar_extended_09_final_comparison.png)
 
@@ -204,7 +214,13 @@
 
 ## Slide 5: Price - Die Volatilitäts-Challenge
 
-### 📊 Performance Overview
+### � Price Zeitreihe 2022-2024
+
+![Price Timeline](results/figures/price_timeline_clean.png)
+
+*Charakteristik: Hohe Volatilität (CV=0.850), 827 negative Preise (3.15%), Max 936 EUR/MWh*
+
+### �📊 Performance Overview
 
 ![Price Model Comparison](results/figures/price_extended_09_final_comparison.png)
 
@@ -275,7 +291,13 @@
 
 ## Slide 6: Wind Offshore - Der Problemfall
 
-### 📊 Performance Overview (nach Data Cleaning)
+### � Wind Offshore Zeitreihe 2022-2024
+
+![Wind Offshore Timeline](results/figures/wind_offshore_timeline_clean.png)
+
+*Charakteristik: 9.6-Monate Stillstand (Apr 2023 - Jan 2024), 37.9% Nullwerte, nur 18.312 valide Datenpunkte*
+
+### �📊 Performance Overview (nach Data Cleaning)
 
 ![Wind Offshore Comparison](results/figures/wind_offshore_09_comparison.png)
 
@@ -308,7 +330,13 @@
 
 ## Slide 7: Wind Onshore - Warum versagt Deep Learning hier?
 
-### 📊 Performance Overview
+### � Wind Onshore Zeitreihe 2022-2024
+
+![Wind Onshore Timeline](results/figures/wind_onshore_timeline_clean.png)
+
+*Charakteristik: Kontinuierlicher Betrieb, nur 21 Nullwerte (0.08%), hohe Volatilität (CV=0.666)*
+
+### �📊 Performance Overview
 
 ![Wind Onshore Comparison](results/figures/wind_onshore_extended_09_final_comparison.png)
 
@@ -469,7 +497,13 @@ GPU-Aufwand (23s Training, OK)
 
 ## Slide 7b: Consumption - Der interessante Mittelweg
 
-### 📊 Performance Overview
+### � Consumption Zeitreihe 2022-2024
+
+![Consumption Timeline](results/figures/consumption_timeline_clean.png)
+
+*Charakteristik: Stabile Muster, niedrigste Volatilität (CV=0.175), klare Wochen-/Tageszyklen*
+
+### �📊 Performance Overview
 
 ![Consumption Comparison](results/figures/consumption_extended_09_final_comparison.png)
 
